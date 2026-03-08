@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Shiroko MD</title>
+  <link href="https://unpkg.com/boxicons@2.1.2/css/boxicons.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&family=Quicksand:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Quicksand', sans-serif;
+      background: #e3f2fd;
+      overflow-x: hidden;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    body.dark-mode {
+      background: #121212;
+      color: #f5f5f5;
+    }
+
+    body.dark-mode .logo .menu-icon,
+    body.dark-mode .logo .logo-name,
+    body.dark-mode .typing-text,
+    body.dark-mode .description {
+      color: #f5f5f5;
+    }
+
+    body.dark-mode nav {
+      background: #1e1e1e;
+      box-shadow: 0 0 1px rgba(255, 255, 255, 0.1);
+    }
+
+    body.dark-mode .logo .menu-icon,
+    body.dark-mode .logo .logo-name {
+      color: #f5f5f5;
+    }
+
+    body.dark-mode .sidebar {
+      background-color: #1e1e1e;
+      box-shadow: 0 5px 15px rgba(255, 255, 255, 0.1);
+    }
+
+    body.dark-mode .nav-link .icon,
+    body.dark-mode .nav-link .link {
+      color: #b0b0b0;
+    }
+
+    body.dark-mode .nav-link:hover {
+      background-color: #4070f4;
+    }
+
+    body.dark-mode .nav-link:hover .icon,
+    body.dark-mode .nav-link:hover .link {
+      color: #fff;
+    }
+
+    body.dark-mode .bottom-content .nav-link {
+      background-color: #333;
+    }
+
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 70px;
+      width: 100%;
+      background: #fff;
+      box-shadow: 0 0 1px rgba(0, 0, 0, 0.1);
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+    }
+
+    .logo .menu-icon {
+      color: #333;
+      font-size: 24px;
+      margin-right: 14px;
+      cursor: pointer;
+    }
+
+    .logo .logo-name {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 22px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .theme-toggle {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #333;
+    }
+
+    body.dark-mode .theme-toggle {
+      color: #f5f5f5;
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: -100%;
+      height: 100%;
+      width: 260px;
+      background-color: #fff;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      transition: left 0.4s ease;
+      z-index: 9;
+      padding-top: 70px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    nav.open + .sidebar {
+      left: 0;
+    }
+
+    .profile-pic {
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    .profile-pic img {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .lists, .bottom-content {
+      list-style: none;
+      padding: 0 16px;
+    }
+
+    .list {
+      margin: 8px 0;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      padding: 12px 14px;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: background 0.3s;
+    }
+
+    .nav-link .icon {
+      margin-right: 14px;
+      font-size: 20px;
+      color: #707070;
+    }
+
+    .nav-link .link {
+      font-size: 16px;
+      color: #707070;
+    }
+
+    .nav-link:hover {
+      background-color: #4070f4;
+    }
+
+    .nav-link:hover .icon,
+    .nav-link:hover .link {
+      color: #fff;
+    }
+
+    .bottom-content .nav-link {
+      background-color: #000;
+    }
+
+    body.dark-mode .bottom-content .nav-link {
+      background-color: #333;
+    }
+
+    .bottom-content .icon,
+    .bottom-content .link {
+      color: #fff !important;
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: -100%;
+      height: 100%;
+      width: 100%;
+      background: rgba(0, 0, 0, 0.3);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.4s ease;
+      z-index: 8;
+    }
+
+    nav.open ~ .overlay {
+      left: 0;
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    main.center-content {
+      min-height: 100vh;
+      padding-top: 100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .logo-3d {
+      width: 140px;
+      height: 140px;
+      margin-bottom: 20px;
+      border-radius: 50%;
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: pointer;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .logo-3d img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.3s ease;
+      border-radius: 50%;
+    }
+
+    .logo-3d:hover {
+      transform: rotateY(15deg) rotateX(10deg) scale(1.05);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.35);
+    }
+
+    .typing-text {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 26px;
+      font-weight: 600;
+      color: #333;
+      border-right: 3px solid #333;
+      white-space: nowrap;
+      overflow: hidden;
+      width: 0;
+      animation: typing 4s steps(30, end) infinite, blink 0.75s step-end infinite;
+    }
+
+    body.dark-mode .typing-text {
+      color: #f5f5f5;
+      border-right: 3px solid #f5f5f5;
+    }
+
+    @keyframes typing {
+      0% { width: 0; }
+      50% { width: 21ch; }
+      100% { width: 0; }
+    }
+
+    @keyframes blink {
+      50% { border-color: transparent; }
+    }
+
+    .description {
+      margin-top: 16px;
+      max-width: 600px;
+      font-size: 16px;
+      color: #444;
+      padding: 0 20px;
+      line-height: 1.6;
+    }
+
+    body.dark-mode .description {
+      color: #d0d0d0;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="logo">
+      <i class="bx bx-menu menu-icon"></i>
+      <span class="logo-name">Shiroko MD</span>
+    </div>
+    <button class="theme-toggle" id="themeToggle">
+      <i class="bx bx-moon"></i>
+    </button>
+  </nav>
+
+  <div class="sidebar">
+    <div>
+      <div class="profile-pic">
+        <img src="https://files.catbox.moe/bwq298.jpg" alt="Profile Picture">
+      </div>
+      <ul class="lists">
+        <li class="list">
+          <a href="/home" class="nav-link">
+            <i class="bx bx-home-alt icon"></i>
+            <span class="link">Home</span>
+          </a>
+        </li>
+        <li class="list">
+          <a href="/credit" class="nav-link">
+            <i class="bx bx-credit-card icon"></i>
+            <span class="link">Credit</span>
+          </a>
+        </li>
+        <li class="list">
+          <a href="/contact" class="nav-link">
+            <i class="bx bx-envelope icon"></i>
+            <span class="link">Contact</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <ul class="bottom-content">
+      <li class="list">
+        <a href="/chatai" class="nav-link">
+          <i class="bx bx-message-dots icon"></i>
+          <span class="link">Chat AI</span>
+        </a>
+      </li>
+      <li class="list">
+        <a href="/album" class="nav-link">
+          <i class="bx bx-photo-album icon"></i>
+          <span class="link">Album</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <section class="overlay"></section>
+
+<main class="center-content flex flex-col items-center justify-center text-center p-10">
+  <div class="logo-3d mb-6">
+    <img
+      src="https://files.catbox.moe/bwq298.jpg"
+      alt="Shiroko Logo"
+      class="w-56 h-56 rounded-full shadow-2xl transition-transform hover:scale-105"
+    />
+  </div>
+  <h1 class="typing-text text-5xl md:text-6xl font-extrabold text-white animate-typing border-r-4 border-white pr-4">
+    Shiroko MD Bot WhatsApp
+  </h1>
+  <p class="description mt-6 max-w-3xl text-xl md:text-2xl text-gray-200 leading-relaxed">
+    <strong>Shiroko MD</strong> adalah bot WhatsApp canggih dengan fitur otomatisasi, pengelolaan chat, dan layanan interaktif berbasis AI.
+    Dirancang untuk membantu aktivitas harian Anda dengan respons cepat, stabil, dan pengalaman yang mulus.
+  </p>
+</main>
+
+  <script>
+    const nav = document.querySelector("nav"),
+          menuIcon = document.querySelector(".menu-icon"),
+          overlay = document.querySelector(".overlay"),
+          themeToggle = document.getElementById("themeToggle"),
+          body = document.body;
+
+    menuIcon.addEventListener("click", () => {
+      nav.classList.toggle("open");
+    });
+
+    overlay.addEventListener("click", () => {
+      nav.classList.remove("open");
+    });
+    themeToggle.addEventListener("click", () => {
+      body.classList.toggle("dark-mode");
+      if (body.classList.contains("dark-mode")) {
+        themeToggle.innerHTML = '<i class="bx bx-sun"></i>';
+      } else {
+        themeToggle.innerHTML = '<i class="bx bx-moon"></i>';
+      }
+    });
+    if (localStorage.getItem("darkMode") === "enabled") {
+      body.classList.add("dark-mode");
+      themeToggle.innerHTML = '<i class="bx bx-sun"></i>';
+    }
+    themeToggle.addEventListener("click", () => {
+      if (body.classList.contains("dark-mode")) {
+        localStorage.setItem("darkMode", "enabled");
+      } else {
+        localStorage.setItem("darkMode", "disabled");
+      }
+    });
+  </script>
+</body>
+</html>

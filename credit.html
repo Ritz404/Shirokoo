@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Shiroko MD</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://unpkg.com/boxicons@2.1.2/css/boxicons.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&family=Quicksand:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Quicksand', sans-serif;
+      background: #e3f2fd;
+      overflow-x: hidden;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    body.dark-mode {
+      background: #121212;
+      color: #f5f5f5;
+    }
+
+    body.dark-mode .logo .menu-icon,
+    body.dark-mode .logo .logo-name,
+    body.dark-mode .typing-text,
+    body.dark-mode .description {
+      color: #f5f5f5;
+    }
+
+    body.dark-mode nav {
+      background: #1e1e1e;
+      box-shadow: 0 0 1px rgba(255, 255, 255, 0.1);
+    }
+
+    body.dark-mode .logo .menu-icon,
+    body.dark-mode .logo .logo-name {
+      color: #f5f5f5;
+    }
+
+    body.dark-mode .sidebar {
+      background-color: #1e1e1e;
+      box-shadow: 0 5px 15px rgba(255, 255, 255, 0.1);
+    }
+
+    body.dark-mode .nav-link .icon,
+    body.dark-mode .nav-link .link {
+      color: #b0b0b0;
+    }
+
+    body.dark-mode .nav-link:hover {
+      background-color: #4070f4;
+    }
+
+    body.dark-mode .nav-link:hover .icon,
+    body.dark-mode .nav-link:hover .link {
+      color: #fff;
+    }
+
+    body.dark-mode .bottom-content .nav-link {
+      background-color: #333;
+    }
+
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 70px;
+      width: 100%;
+      background: #fff;
+      box-shadow: 0 0 1px rgba(0, 0, 0, 0.1);
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+    }
+
+    .logo .menu-icon {
+      color: #333;
+      font-size: 24px;
+      margin-right: 14px;
+      cursor: pointer;
+    }
+
+    .logo .logo-name {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 22px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .theme-toggle {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #333;
+    }
+
+    body.dark-mode .theme-toggle {
+      color: #f5f5f5;
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: -100%;
+      height: 100%;
+      width: 260px;
+      background-color: #fff;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      transition: left 0.4s ease;
+      z-index: 9;
+      padding-top: 70px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    nav.open + .sidebar {
+      left: 0;
+    }
+
+    .profile-pic {
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    .profile-pic img {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .lists, .bottom-content {
+      list-style: none;
+      padding: 0 16px;
+    }
+
+    .list {
+      margin: 8px 0;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      padding: 12px 14px;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: background 0.3s;
+    }
+
+    .nav-link .icon {
+      margin-right: 14px;
+      font-size: 20px;
+      color: #707070;
+    }
+
+    .nav-link .link {
+      font-size: 16px;
+      color: #707070;
+    }
+
+    .nav-link:hover {
+      background-color: #4070f4;
+    }
+
+    .nav-link:hover .icon,
+    .nav-link:hover .link {
+      color: #fff;
+    }
+
+    .bottom-content .nav-link {
+      background-color: #000;
+    }
+
+    body.dark-mode .bottom-content .nav-link {
+      background-color: #333;
+    }
+
+    .bottom-content .icon,
+    .bottom-content .link {
+      color: #fff !important;
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: -100%;
+      height: 100%;
+      width: 100%;
+      background: rgba(0, 0, 0, 0.3);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.4s ease;
+      z-index: 8;
+    }
+
+    nav.open ~ .overlay {
+      left: 0;
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    main.center-content {
+      min-height: 100vh;
+      padding-top: 100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .logo-3d {
+      width: 140px;
+      height: 140px;
+      margin-bottom: 20px;
+      border-radius: 50%;
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: pointer;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .logo-3d img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.3s ease;
+      border-radius: 50%;
+    }
+
+    .logo-3d:hover {
+      transform: rotateY(15deg) rotateX(10deg) scale(1.05);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.35);
+    }
+
+    .typing-text {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 26px;
+      font-weight: 600;
+      color: #333;
+      border-right: 3px solid #333;
+      white-space: nowrap;
+      overflow: hidden;
+      width: 0;
+      animation: typing 4s steps(30, end) infinite, blink 0.75s step-end infinite;
+    }
+
+    body.dark-mode .typing-text {
+      color: #f5f5f5;
+      border-right: 3px solid #f5f5f5;
+    }
+
+    @keyframes typing {
+      0% { width: 0; }
+      50% { width: 21ch; }
+      100% { width: 0; }
+    }
+
+    @keyframes blink {
+      50% { border-color: transparent; }
+    }
+
+    .description {
+      margin-top: 16px;
+      max-width: 600px;
+      font-size: 16px;
+      color: #444;
+      padding: 0 20px;
+      line-height: 1.6;
+    }
+
+    body.dark-mode .description {
+      color: #d0d0d0;
+    }
+
+    /* Credit Section Styles */
+    .credit-section {
+      margin-top: 80px;
+      padding: 60px 20px;
+      text-align: center;
+      background: #f4f7fb;
+      font-family: 'Quicksand', sans-serif;
+    }
+
+    body.dark-mode .credit-section {
+      background: #1a1a1a;
+    }
+
+    .credit-section h2 {
+      font-size: 32px;
+      margin-bottom: 20px;
+      font-family: 'Orbitron', sans-serif;
+      color: #333;
+    }
+
+    body.dark-mode .credit-section h2 {
+      color: #f5f5f5;
+    }
+
+    .credit-section p {
+      font-size: 16px;
+      color: #555;
+      margin-bottom: 40px;
+    }
+
+    body.dark-mode .credit-section p {
+      color: #d0d0d0;
+    }
+
+    .cards-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 30px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: #fff;
+      padding: 24px;
+      border-radius: 16px;
+      width: 280px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease;
+    }
+
+    body.dark-mode .card {
+      background: #2a2a2a;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+    }
+
+    .card img {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 16px;
+    }
+
+    .card h3 {
+      font-size: 22px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    body.dark-mode .card h3 {
+      color: #f5f5f5;
+    }
+
+    .card .role {
+      color: #666;
+      font-size: 14px;
+      margin: 6px 0 10px;
+    }
+
+    body.dark-mode .card .role {
+      color: #b0b0b0;
+    }
+
+    .card p {
+      font-size: 14px;
+      color: #444;
+    }
+
+    body.dark-mode .card p {
+      color: #d0d0d0;
+    }
+  .credit-section {
+    padding: 2rem;
+    background: #f8f9fa;
+    text-align: center;
+  }
+
+  .credit-section h2 {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .cards-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2rem;
+  }
+
+  .card {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    width: 320px;
+    padding: 1.5rem;
+    transition: transform 0.3s;
+  }
+
+  .card:hover {
+    transform: translateY(-5px);
+  }
+
+  .card img {
+    width: 100%;
+    height: 280px;
+    object-fit: cover;
+    border-radius: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .card h3 {
+    font-size: 1.6rem;
+    margin: 0.5rem 0;
+  }
+
+  .badge {
+    font-size: 0.75rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 999px;
+    margin-left: 0.5rem;
+    background: #ccc;
+    color: #fff;
+  }
+
+  .badge-lead { background: #007bff; }
+  .badge-ui { background: #e83e8c; }
+  .badge-team { background: #28a745; }
+
+  .role {
+    font-style: italic;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+  }
+
+  .card p {
+    font-size: 0.95rem;
+    color: #333;
+  }
+
+  @media (max-width: 768px) {
+    .card {
+      width: 90%;
+    }
+  }    
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="logo">
+      <i class="bx bx-menu menu-icon"></i>
+      <span class="logo-name">Shiroko MD</span>
+    </div>
+    <button class="theme-toggle" id="themeToggle">
+      <i class="bx bx-moon"></i>
+    </button>
+  </nav>
+
+  <div class="sidebar">
+    <div>
+      <div class="profile-pic">
+        <img src="https://files.catbox.moe/bwq298.jpg" alt="Profile Picture">
+      </div>
+      <ul class="lists">
+        <li class="list">
+          <a href="/home" class="nav-link">
+            <i class="bx bx-home-alt icon"></i>
+            <span class="link">Home</span>
+          </a>
+        </li>
+        <li class="list">
+          <a href="/credit" class="nav-link">
+            <i class="bx bx-credit-card icon"></i>
+            <span class="link">Credit</span>
+          </a>
+        </li>
+        <li class="list">
+          <a href="/contact" class="nav-link">
+            <i class="bx bx-envelope icon"></i>
+            <span class="link">Contact</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <ul class="bottom-content">
+      <li class="list">
+        <a href="/chatai" class="nav-link">
+          <i class="bx bx-message-dots icon"></i>
+          <span class="link">Chat AI</span>
+        </a>
+      </li>
+      <li class="list">
+        <a href="/album" class="nav-link">
+          <i class="bx bx-photo-album icon"></i>
+          <span class="link">Album</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <section class="overlay"></section>
+
+<section class="credit-section">
+  <h2><i class="fas fa-code-branch"></i> Developer Credits</h2>
+  <p>Terima kasih kepada tim luar biasa yang telah mengembangkan dan memelihara <strong>Shiroko MD</strong> dengan sepenuh hati dan dedikasi tinggi.</p>
+
+  <div class="cards-container">
+    <!-- Ritz -->
+    <div class="card">
+      <img src="https://files.catbox.moe/apfr52.jpg" alt="Ritz">
+      <h3>Ritz <span class="badge badge-lead">Founder</span></h3>
+      <p class="role"><i class="fas fa-terminal"></i> Lead Developer</p>
+      <p>Spesialis backend dan arsitektur sistem. Mengembangkan handler modular, manajemen session, serta sistem API terintegrasi untuk WhatsApp Bot.</p>
+    </div>
+
+    <!-- WanRzy -->
+    <div class="card">
+      <img src="https://files.catbox.moe/gxjclh.jpg" alt="WanRzy">
+      <h3>WanRzy <span class="badge badge-ui">UI/UX</span></h3>
+      <p class="role"><i class="fas fa-palette"></i> Frontend Engineer</p>
+      <p>Mendesain antarmuka yang modern dan responsif untuk halaman web Shiroko MD, serta memperkuat aspek visual dan pengalaman pengguna.</p>
+    </div>
+
+    <!-- Shiroko Team -->
+    <div class="card">
+      <img src="https://files.catbox.moe/xv54qx.jpg" alt="Shiroko Team">
+      <h3>Shiroko Team <span class="badge badge-team">Support</span></h3>
+      <p class="role"><i class="fas fa-users"></i> Contributors & Community</p>
+      <p>Ucapan terima kasih untuk semua kontributor, tester, dan pengguna setia yang telah memberi feedback dan semangat selama proses pengembangan.</p>
+    </div>
+  </div>
+</section>
+
+  <script>
+    const nav = document.querySelector("nav"),
+          menuIcon = document.querySelector(".menu-icon"),
+          overlay = document.querySelector(".overlay"),
+          themeToggle = document.getElementById("themeToggle"),
+          body = document.body;
+
+    menuIcon.addEventListener("click", () => {
+      nav.classList.toggle("open");
+    });
+
+    overlay.addEventListener("click", () => {
+      nav.classList.remove("open");
+    });
+    themeToggle.addEventListener("click", () => {
+      body.classList.toggle("dark-mode");
+      if (body.classList.contains("dark-mode")) {
+        themeToggle.innerHTML = '<i class="bx bx-sun"></i>';
+      } else {
+        themeToggle.innerHTML = '<i class="bx bx-moon"></i>';
+      }
+    });
+    if (localStorage.getItem("darkMode") === "enabled") {
+      body.classList.add("dark-mode");
+      themeToggle.innerHTML = '<i class="bx bx-sun"></i>';
+    }
+    themeToggle.addEventListener("click", () => {
+      if (body.classList.contains("dark-mode")) {
+        localStorage.setItem("darkMode", "enabled");
+      } else {
+        localStorage.setItem("darkMode", "disabled");
+      }
+    });
+  </script>
+</body>
+</html>

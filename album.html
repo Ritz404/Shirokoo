@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anime Vision | Premium Gallery</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Righteous&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #FF2E63;
+            --secondary: #FF7B9C;
+            --accent: #08D9D6;
+            --dark: #0F0E17;
+            --darker: #0A0A12;
+            --light: #F9F9F9;
+            --text: #E4F1FF;
+            --text-secondary: #A7BED3;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background-color: var(--dark);
+            color: var(--text);
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 30%, rgba(255, 46, 99, 0.15) 0%, transparent 25%),
+                radial-gradient(circle at 85% 70%, rgba(8, 217, 214, 0.15) 0%, transparent 25%);
+        }
+        
+        .container {
+            max-width: 1500px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+            position: relative;
+            z-index: 2;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 4rem;
+            position: relative;
+            padding: 2rem 0;
+        }
+        
+        h1 {
+            font-family: 'Righteous', cursive;
+            font-size: 4.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 1.5rem;
+            letter-spacing: 1px;
+            position: relative;
+            display: inline-block;
+            text-shadow: 0 5px 15px rgba(255, 46, 99, 0.3);
+            animation: titleGlow 3s ease-in-out infinite alternate;
+        }
+        
+        @keyframes titleGlow {
+            0% { text-shadow: 0 5px 15px rgba(255, 46, 99, 0.3); }
+            50% { text-shadow: 0 5px 25px rgba(255, 46, 99, 0.5), 0 10px 30px rgba(8, 217, 214, 0.4); }
+            100% { text-shadow: 0 5px 15px rgba(255, 46, 99, 0.3); }
+        }
+        
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            border-radius: 4px;
+            animation: underlinePulse 3s ease-in-out infinite;
+        }
+        
+        @keyframes underlinePulse {
+            0%, 100% { width: 120px; opacity: 1; }
+            50% { width: 180px; opacity: 0.8; }
+        }
+        
+        .subtitle {
+            font-family: 'Quicksand', sans-serif;
+            font-size: 1.4rem;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto 2rem;
+            line-height: 1.7;
+            font-weight: 500;
+            opacity: 0.9;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 4rem;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+        
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 50px;
+            padding: 1rem 1.8rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            width: 500px;
+            max-width: 100%;
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(5px);
+        }
+        
+        .search-box:focus-within {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            border-color: rgba(255, 46, 99, 0.4);
+            background: rgba(255, 255, 255, 0.12);
+        }
+        
+        .search-box input {
+            background: transparent;
+            border: none;
+            color: var(--text);
+            padding: 0.5rem;
+            width: 100%;
+            outline: none;
+            font-size: 1.1rem;
+            font-family: 'Quicksand', sans-serif;
+        }
+        
+        .search-box input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+        
+        .search-box i {
+            color: var(--accent);
+            margin-right: 1rem;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+        
+        .search-box:focus-within i {
+            transform: scale(1.1);
+            color: var(--primary);
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 1.1rem 3rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 25px rgba(255, 46, 99, 0.3);
+            position: relative;
+            overflow: hidden;
+            font-family: 'Quicksand', sans-serif;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: 0.5s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-5px) scale(1.03);
+            box-shadow: 0 15px 35px rgba(255, 46, 99, 0.4);
+        }
+        
+        .btn:hover::before {
+            left: 100%;
+        }
+        
+        .btn:active {
+            transform: translateY(2px);
+        }
+        
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 3rem;
+            margin-top: 2rem;
+        }
+        
+        .card {
+            background: rgba(15, 14, 23, 0.7);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            position: relative;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: cardEntrance 0.8s forwards;
+        }
+        
+        @keyframes cardEntrance {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .card:hover {
+            transform: translateY(-15px) scale(1.02);
+            box-shadow: 0 20px 50px rgba(255, 46, 99, 0.25);
+            border-color: rgba(255, 46, 99, 0.3);
+        }
+        
+        .card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255, 46, 99, 0.1), rgba(8, 217, 214, 0.1));
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        
+        .card:hover::after {
+            opacity: 1;
+        }
+        
+        .card-img-container {
+            width: 100%;
+            height: 380px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .card-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: all 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
+            transform-origin: center center;
+        }
+        
+        .card:hover .card-img {
+            transform: scale(1.1);
+        }
+        
+        .card-body {
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .card-title {
+            font-size: 1.5rem;
+            margin-bottom: 0.8rem;
+            color: var(--light);
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            font-family: 'Quicksand', sans-serif;
+        }
+        
+        .character-tag {
+            background: linear-gradient(135deg, rgba(8, 217, 214, 0.2), rgba(255, 46, 99, 0.2));
+            color: var(--accent);
+            padding: 0.5rem 1.2rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            display: inline-block;
+            margin-top: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover .character-tag {
+            background: linear-gradient(135deg, rgba(8, 217, 214, 0.3), rgba(255, 46, 99, 0.3));
+            color: var(--primary);
+        }
+        
+        .loading-container {
+            display: none;
+            text-align: center;
+            margin: 4rem 0;
+            grid-column: 1/-1;
+            position: relative;
+        }
+        
+        .loading-content {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        
+        .loading-spinner {
+            position: relative;
+            width: 80px;
+            height: 80px;
+        }
+        
+        .loading-spinner::before,
+        .loading-spinner::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 5px solid transparent;
+            animation: spin 1.5s linear infinite;
+        }
+        
+        .loading-spinner::before {
+            border-top-color: var(--primary);
+            border-bottom-color: var(--primary);
+            animation-delay: 0.1s;
+        }
+        
+        .loading-spinner::after {
+            border-left-color: var(--accent);
+            border-right-color: var(--accent);
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            position: relative;
+        }
+        
+        .loading-text::after {
+            content: '...';
+            position: absolute;
+            animation: dots 1.5s infinite steps(4, end);
+        }
+        
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 8rem;
+            padding: 4rem 0;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            position: relative;
+            font-family: 'Quicksand', sans-serif;
+        }
+        
+        footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            border-radius: 3px;
+        }
+        
+        .floating-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--primary), transparent);
+            filter: blur(30px);
+            opacity: 0.2;
+            animation: float 15s infinite linear;
+        }
+        
+        @keyframes float {
+            0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+            25% { transform: translate(100px, 50px) rotate(90deg) scale(1.1); }
+            50% { transform: translate(0, 100px) rotate(180deg) scale(1); }
+            75% { transform: translate(-100px, 50px) rotate(270deg) scale(0.9); }
+            100% { transform: translate(0, 0) rotate(360deg) scale(1); }
+        }
+        
+        /* Watermark effect */
+        .watermark {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.2);
+            z-index: 10;
+            font-family: 'Poppins', sans-serif;
+            transform: rotate(-5deg);
+            pointer-events: none;
+        }
+        
+        @media (max-width: 1200px) {
+            h1 {
+                font-size: 3.8rem;
+            }
+            
+            .gallery {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 2.5rem;
+            }
+        }
+        
+        @media (max-width: 992px) {
+            h1 {
+                font-size: 3.2rem;
+            }
+            
+            .subtitle {
+                font-size: 1.2rem;
+            }
+            
+            .card-img-container {
+                height: 340px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 2rem 1.5rem;
+            }
+            
+            h1 {
+                font-size: 2.8rem;
+            }
+            
+            .subtitle {
+                font-size: 1.1rem;
+                max-width: 90%;
+            }
+            
+            .controls {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+            
+            .search-box {
+                width: 100%;
+                padding: 0.9rem 1.5rem;
+            }
+            
+            .btn {
+                width: 100%;
+                padding: 1rem;
+            }
+            
+            .gallery {
+                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+                gap: 2rem;
+            }
+            
+            .card-img-container {
+                height: 300px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .gallery {
+                grid-template-columns: 1fr;
+                gap: 1.8rem;
+            }
+            
+            .card-img-container {
+                height: 280px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-particles" id="particles"></div>
+    <div class="watermark">ANIME VISION</div>
+    
+    <div class="container">
+        <header class="animate__animated animate__fadeInDown">
+            <h1>Anime Vision</h1>
+            <p class="subtitle">Immerse yourself in our premium collection of breathtaking anime characters, curated for true connoisseurs</p>
+        </header>
+        
+        <div class="controls animate__animated animate__fadeIn">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="search-input" placeholder="Search for your favorite character...">
+            </div>
+            <button class="btn" id="load-more">
+                <span class="btn-text">Explore More</span>
+                <i class="fas fa-chevron-right btn-icon"></i>
+            </button>
+        </div>
+        
+        <div class="loading-container" id="loading">
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <p class="loading-text">Loading the magic</p>
+            </div>
+        </div>
+        
+        <div class="gallery" id="gallery"></div>
+    </div>
+    
+    <footer class="animate__animated animate__fadeInUp">
+        <p>© 2025 Anime Vision Premium | Crafted with passion for anime enthusiasts worldwide</p>
+    </footer>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const gallery = document.getElementById('gallery');
+            const loading = document.getElementById('loading');
+            const loadMoreBtn = document.getElementById('load-more');
+            const searchInput = document.getElementById('search-input');
+            const particlesContainer = document.getElementById('particles');
+            
+            function createParticles() {
+                const particleCount = 8;
+                for (let i = 0; i < particleCount; i++) {
+                    const particle = document.createElement('div');
+                    particle.classList.add('particle');
+                    
+                    const size = Math.random() * 300 + 100;
+                    particle.style.width = `${size}px`;
+                    particle.style.height = `${size}px`;
+                    
+                    particle.style.left = `${Math.random() * 100}%`;
+                    particle.style.top = `${Math.random() * 100}%`;
+                    
+                    const duration = Math.random() * 20 + 10;
+                    const delay = Math.random() * 5;
+                    particle.style.animationDuration = `${duration}s`;
+                    particle.style.animationDelay = `${delay}s`;
+                    
+                    particlesContainer.appendChild(particle);
+                }
+            }
+            
+            createParticles();
+            
+            const characters = [
+                "akira", "akiyama", "asuna", "ayuzawa", "boruto", 
+                "chitanda", "chitoge", "deidara", "doraemon", "elaina", 
+                "emilia", "erza", "gremory", "hestia", "hinata", 
+                "inori", "itachi", "isuzu", "itori", "kaga", 
+                "kagura", "kakasih", "kaori", "kaneki", "kosaki", 
+                "kotori", "kuriyama", "kuroha", "kurumi", "madara", 
+                "mikasa", "miku", "minato", "naruto", "natsukawa", 
+                "nekohime", "nezuko", "nishimiya", "onepiece", "pokemon", 
+                "rem", "rize", "sagiri", "sakura", "sasuke", 
+                "shina", "shinka", "shizuka", "shota", "tomori", 
+                "toukachan", "tsunade", "yatogami", "yuki"
+            ];
+            
+            let allImages = [];
+            let displayedImages = 0;
+            const imagesPerLoad = 12;
+            let isLoading = false;
+            
+            setTimeout(() => {
+                document.querySelector('header').classList.add('animate__fadeInDown');
+                document.querySelector('.controls').classList.add('animate__fadeIn');
+            }, 100);
+            
+            async function loadAllImages() {
+                if (isLoading) return;
+                isLoading = true;
+                loading.style.display = 'block';
+                
+                try {
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    
+                    for (const character of characters) {
+                        try {
+                            const response = await fetch(`https://raw.githubusercontent.com/KazukoGans/database/main/anime/${character}.json`);
+                            if (!response.ok) continue;
+                            
+                            const images = await response.json();
+                            images.forEach(imgUrl => {
+                                allImages.push({
+                                    url: imgUrl,
+                                    character: character
+                                });
+                            });
+                        } catch (error) {
+                            console.error(`Error loading ${character}:`, error);
+                        }
+                    }
+                    
+                    allImages = allImages.sort(() => 0.5 - Math.random());
+                    
+                    displayImages();
+                } catch (error) {
+                    showError(error);
+                } finally {
+                    isLoading = false;
+                    loading.style.display = 'none';
+                }
+            }
+            
+            function showError(error) {
+                gallery.innerHTML = `
+                    <div class="error-message" style="grid-column: 1/-1; text-align: center; padding: 3rem;">
+                        <div style="font-size: 5rem; color: var(--primary); margin-bottom: 1.5rem;">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <h3 style="font-size: 1.8rem; margin-bottom: 1rem; color: var(--text);">Connection Error</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 2rem; max-width: 600px; margin: 0 auto 2rem;">
+                            We couldn't connect to our image database. Please check your internet connection and try again.
+                        </p>
+                        <button class="btn" id="retry-btn" style="padding: 0.8rem 2rem; font-size: 1rem;">
+                            <i class="fas fa-sync-alt" style="margin-right: 0.5rem;"></i> Retry
+                        </button>
+                    </div>
+                `;
+                
+                document.getElementById('retry-btn').addEventListener('click', loadAllImages);
+            }
+            
+            function displayImages() {
+                const imagesToShow = allImages.slice(displayedImages, displayedImages + imagesPerLoad);
+                
+                imagesToShow.forEach((img, index) => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.style.animationDelay = `${index * 0.1}s`;
+                    
+                    const characterName = formatCharacterName(img.character);
+                    
+                    card.innerHTML = `
+                        <div class="card-img-container">
+                            <img src="${img.url}" alt="${img.character}" class="card-img" loading="lazy">
+                        </div>
+                        <div class="card-body">
+                            <h3 class="card-title">${characterName}</h3>
+                            <span class="character-tag">${img.character}</span>
+                        </div>
+                    `;
+                    
+                    gallery.appendChild(card);
+                });
+                
+                displayedImages += imagesPerLoad;
+                
+                if (displayedImages >= allImages.length) {
+                    loadMoreBtn.style.display = 'none';
+                } else {
+                    loadMoreBtn.style.display = 'block';
+                }
+            }
+            
+            function formatCharacterName(name) {
+                return name.split('-').map(word => 
+                    word.charAt(0).toUpperCase() + word.slice(1)
+                ).join(' ');
+            }
+            
+            function searchImages(query) {
+                query = query.toLowerCase().trim();
+                
+                if (!query) {
+                    gallery.querySelectorAll('.card').forEach(card => {
+                        card.style.display = 'block';
+                    });
+                    return;
+                }
+                
+                gallery.querySelectorAll('.card').forEach(card => {
+                    const title = card.querySelector('.card-title').textContent.toLowerCase();
+                    const tag = card.querySelector('.character-tag').textContent.toLowerCase();
+                    
+                    if (title.includes(query) || tag.includes(query)) {
+                        card.style.display = 'block';
+                        card.classList.add('animate__animated', 'animate__fadeIn');
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            }
+            
+            loadMoreBtn.addEventListener('click', function() {
+                displayImages();
+                
+                setTimeout(() => {
+                    const newCards = gallery.querySelectorAll('.card');
+                    if (newCards.length > 0) {
+                        newCards[newCards.length - 1].scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'nearest',
+                            inline: 'nearest'
+                        });
+                    }
+                }, 300);
+            });
+            
+            searchInput.addEventListener('input', function() {
+                searchImages(this.value);
+            });
+            
+            loadAllImages();
+        });
+    </script>
+</body>
+</html>

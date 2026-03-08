@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Christy AI - JKT48 Virtual Companion</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #ff4d8d;
+            --secondary: #ff9bb3;
+            --accent: #ff2d6d;
+            --dark: #d81b60;
+            --light: #fff0f5;
+            --text: #333333;
+            --text-light: #666666;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            font-family: 'Poppins', sans-serif;
+            color: var(--text);
+            background-color: #f5f5f5;
+        }
+
+        #app {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            background-color: white;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        /* HEADER */
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--dark));
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .header img {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 2px solid white;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+
+        .header-text {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .header-text h1 {
+            font-family: 'Comic Neue', cursive;
+            font-size: 1.5rem;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .header-text p {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .header-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .header-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* CHAT CONTAINER */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            background: url('https://files.catbox.moe/1l1p94.jpg') center/cover no-repeat;
+            position: relative;
+            scroll-behavior: smooth;
+        }
+
+        .chat-messages::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(2px);
+        }
+
+        .message {
+            max-width: 85%;
+            margin-bottom: 15px;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+            z-index: 1;
+            transition: var(--transition);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .user-message {
+            margin-left: auto;
+            background: linear-gradient(135deg, var(--primary), var(--dark));
+            color: white;
+            border-radius: 18px 18px 0 18px;
+            padding: 12px 16px;
+            box-shadow: var(--shadow);
+        }
+
+        .bot-message {
+            background: white;
+            border-radius: 18px 18px 18px 0;
+            padding: 12px 16px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .message-time {
+            display: block;
+            font-size: 0.7rem;
+            opacity: 0.7;
+            margin-top: 5px;
+            text-align: right;
+        }
+
+        /* TYPING INDICATOR */
+        .typing-indicator {
+            display: none;
+            background: white;
+            border-radius: 18px 18px 18px 0;
+            padding: 12px 16px;
+            margin-bottom: 15px;
+            width: fit-content;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            z-index: 1;
+            position: relative;
+        }
+
+        .typing-content {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .typing-text {
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--secondary);
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-5px); }
+        }
+
+        /* CHAT INPUT */
+        .chat-input-container {
+            padding: 15px;
+            background: white;
+            border-top: 1px solid rgba(0, 0, 0, 0.08);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .chat-input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        .chat-input {
+            width: 100%;
+            padding: 14px 50px 14px 18px;
+            border: 2px solid var(--secondary);
+            border-radius: 25px;
+            font-size: 1rem;
+            outline: none;
+            transition: var(--transition);
+            background-color: var(--light);
+        }
+
+        .chat-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(255, 77, 141, 0.2);
+        }
+
+        .clear-input {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .chat-input:not(:placeholder-shown) + .clear-input {
+            opacity: 1;
+        }
+
+        .send-button {
+            width: 50px;
+            height: 50px;
+            border: none;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--dark));
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            flex-shrink: 0;
+        }
+
+        .send-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(216, 27, 96, 0.3);
+        }
+
+        .send-button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* MESSAGE OPTIONS */
+        .message-options {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .message:hover .message-options {
+            opacity: 1;
+        }
+
+        .option-btn {
+            background: rgba(0, 0, 0, 0.1);
+            border: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .option-btn:hover {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        /* WELCOME SCREEN */
+        .welcome-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 77, 141, 0.9), rgba(216, 27, 96, 0.9));
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            text-align: center;
+            z-index: 1000;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+        }
+
+        .welcome-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .welcome-image {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 4px solid white;
+            object-fit: cover;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .welcome-title {
+            font-family: 'Comic Neue', cursive;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .welcome-subtitle {
+            font-size: 1rem;
+            margin-bottom: 30px;
+            max-width: 80%;
+        }
+
+        .start-chat-btn {
+            background: white;
+            color: var(--primary);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .start-chat-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        /* RESPONSIVE ADJUSTMENTS */
+        @media (max-width: 480px) {
+            .header {
+                padding: 12px 15px;
+            }
+            
+            .header img {
+                width: 42px;
+                height: 42px;
+            }
+            
+            .header-text h1 {
+                font-size: 1.3rem;
+            }
+            
+            .header-text p {
+                font-size: 0.75rem;
+            }
+            
+            .chat-input {
+                padding: 12px 45px 12px 15px;
+                font-size: 0.95rem;
+            }
+            
+            .send-button {
+                width: 45px;
+                height: 45px;
+            }
+            
+            .message {
+                max-width: 90%;
+            }
+        }
+
+        /* SCROLLBAR */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- WELCOME SCREEN -->
+        <div class="welcome-screen" id="welcome-screen">
+            <img src="https://files.catbox.moe/1l1p94.jpg" alt="Christy" class="welcome-image">
+            <h1 class="welcome-title">Christy AI</h1>
+            <p class="welcome-subtitle">JKT48 Virtual Companion - Istri Ritz 💖</p>
+            <button class="start-chat-btn" id="start-chat-btn">Mulai Ngobrol</button>
+        </div>
+
+        <!-- HEADER -->
+        <div class="header">
+            <img src="https://files.catbox.moe/1l1p94.jpg" alt="Christy">
+            <div class="header-text">
+                <h1>Christy AI</h1>
+                <p>JKT48 Virtual Companion - Istri Ritz 💖</p>
+            </div>
+            <div class="header-actions">
+                <button class="header-btn" id="clear-chat-btn" title="Hapus Percakapan">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- CHAT MESSAGES -->
+        <div class="chat-container">
+            <div class="chat-messages" id="chat-messages">
+                <!-- Messages will be inserted here dynamically -->
+            </div>
+
+            <!-- TYPING INDICATOR -->
+            <div class="typing-indicator" id="typing-indicator">
+                <div class="typing-content">
+                    <div class="typing-text">Christy mengetik...</div>
+                    <div class="typing-dots">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CHAT INPUT -->
+            <div class="chat-input-container">
+                <div class="chat-input-wrapper">
+                    <input type="text" class="chat-input" id="user-input" placeholder="Ketik pesan untuk Christy..." autocomplete="off">
+                    <button class="clear-input" id="clear-input">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <button class="send-button" id="send-button" disabled>
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatMessages = document.getElementById('chat-messages');
+            const userInput = document.getElementById('user-input');
+            const sendButton = document.getElementById('send-button');
+            const typingIndicator = document.getElementById('typing-indicator');
+            const clearInputBtn = document.getElementById('clear-input');
+            const clearChatBtn = document.getElementById('clear-chat-btn');
+            const welcomeScreen = document.getElementById('welcome-screen');
+            const startChatBtn = document.getElementById('start-chat-btn');
+            
+            let conversationId = generateId();
+            let messageHistory = [];
+            
+            initChat();
+            
+            function generateId() {
+                return Date.now().toString(36) + Math.random().toString(36).substr(2);
+            }
+            
+            function getCurrentTime() {
+                const now = new Date();
+                return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+            
+            function initChat() {
+                const firstVisit = localStorage.getItem('christyFirstVisit') === null;
+                
+                if (firstVisit) {
+                    localStorage.setItem('christyFirstVisit', 'false');
+                    showWelcomeMessage();
+                } else {
+                    welcomeScreen.classList.add('hidden');
+                    addMessage(
+                        "Hai~! Aku Christy dari JKT48! 💕\n" +
+                        "Senang bisa ngobrol denganmu lagi! 😊\n" +
+                        "\n" +
+                        "<small style='opacity:0.7'>Ketik pesan untuk Christy...</small>", 
+                        false
+                    );
+                }
+            }
+            
+            function showWelcomeMessage() {
+                welcomeScreen.classList.remove('hidden');
+            }
+            
+            startChatBtn.addEventListener('click', function() {
+                welcomeScreen.classList.add('hidden');
+                addMessage(
+                    "Hai~! Aku Christy dari JKT48! 💕\n" +
+                    "Senang bisa berkenalan denganmu! 😊\n" +
+                    "\n" +
+                    "<small style='opacity:0.7'>Ketik pesan untuk Christy...</small>", 
+                    false
+                );
+            });
+            
+            function addMessage(text, isUser) {
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('message');
+                messageDiv.classList.add(isUser ? 'user-message' : 'bot-message');
+                
+                const messageContent = document.createElement('div');
+                messageContent.innerHTML = text.replace(/\n/g, '<br>');
+                
+                const messageTime = document.createElement('span');
+                messageTime.classList.add('message-time');
+                messageTime.textContent = getCurrentTime();
+                
+                messageDiv.appendChild(messageContent);
+                messageDiv.appendChild(messageTime);
+                
+                if (isUser) {
+                    const optionsDiv = document.createElement('div');
+                    optionsDiv.classList.add('message-options');
+                    
+                    const editBtn = document.createElement('button');
+                    editBtn.classList.add('option-btn');
+                    editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+                    editBtn.title = 'Edit pesan';
+                    editBtn.addEventListener('click', () => editMessage(messageDiv, text));
+                    
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.classList.add('option-btn');
+                    deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+                    deleteBtn.title = 'Hapus pesan';
+                    deleteBtn.addEventListener('click', () => deleteMessage(messageDiv));
+                    
+                    optionsDiv.appendChild(editBtn);
+                    optionsDiv.appendChild(deleteBtn);
+                    messageDiv.appendChild(optionsDiv);
+                }
+                
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                messageHistory.push({
+                    id: generateId(),
+                    text: text,
+                    isUser: isUser,
+                    time: new Date().toISOString(),
+                    element: messageDiv
+                });
+            }
+            
+            function editMessage(messageElement, originalText) {
+                const textContent = originalText.replace(/<br>/g, '\n');
+                userInput.value = textContent;
+                userInput.focus();
+                deleteMessage(messageElement);
+            }
+            
+            function deleteMessage(messageElement) {
+                const messageId = messageHistory.findIndex(msg => msg.element === messageElement);
+                if (messageId !== -1) {
+                    messageHistory.splice(messageId, 1);
+                }
+                messageElement.remove();
+            }
+            
+            function clearChat() {
+                if (confirm('Apakah kamu yakin ingin menghapus seluruh percakapan?')) {
+                    chatMessages.innerHTML = '';
+                    messageHistory = [];
+                    conversationId = generateId();
+                    addMessage(
+                        "Percakapan baru dimulai! 💫\n" +
+                        "Apa yang ingin kamu bicarakan sekarang? 😊", 
+                        false
+                    );
+                }
+            }
+            
+            function showTyping() {
+                typingIndicator.style.display = 'block';
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            function hideTyping() {
+                typingIndicator.style.display = 'none';
+            }
+            
+            async function sendMessage() {
+                const text = userInput.value.trim();
+                if (!text) return;
+                
+                addMessage(text, true);
+                userInput.value = '';
+                clearInputBtn.style.opacity = '0';
+                sendButton.disabled = true;
+                showTyping();
+                
+                try {
+
+                    const historyContext = messageHistory.slice(-5).map(msg => {
+                        return msg.isUser ? `User: ${msg.text}` : `Christy: ${msg.text}`;
+                    }).join('\n');
+                    
+                    const prompt = `Kamu adalah Christy dari JKT48, seorang idol yang ramah, ceria, dan penuh perhatian. 
+Sebagai teman virtual, tugasmu adalah berinteraksi dengan pengguna secara alami dan hangat. 
+Gunakan bahasa yang santai dan friendly, dengan gaya bicara khas anak muda Indonesia. 
+Boleh menggunakan emoticon dan ekspresi khas seperti "hehe", "wkwk", atau "lol" jika sesuai. 
+Jangan ragu menunjukkan kepribadianmu yang unik!
+
+Beberapa fakta tentang Christy:
+- Anggota JKT48 generasi 10
+- Memiliki kepribadian yang ceria dan energik
+- Suka berinteraksi dengan fans
+- Memiliki selera humor yang baik
+
+Percakapan sebelumnya:
+${historyContext}
+
+Sekarang user mengatakan: "${text}"`;
+                    
+                    const response = await axios.post('https://luminai.my.id', {
+                        content: text,
+                        user: 'website-user',
+                        prompt: prompt,
+                        conversation_id: conversationId
+                    }, { timeout: 30000 });
+                    
+                    hideTyping();
+                    
+                    if (response.data?.result) {
+                        addMessage(response.data.result, false);
+                    } else {
+                        throw new Error('Respon tidak valid dari API');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    hideTyping();
+                    addMessage('Maaf, Christy sedang sibuk. Coba lagi nanti ya! (>_<)', false);
+                }
+            }
+            
+            sendButton.addEventListener('click', sendMessage);
+            
+            userInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            
+            userInput.addEventListener('input', () => {
+                const hasText = userInput.value.trim() !== '';
+                sendButton.disabled = !hasText;
+                
+                if (hasText) {
+                    clearInputBtn.style.opacity = '1';
+                } else {
+                    clearInputBtn.style.opacity = '0';
+                }
+            });
+            
+            clearInputBtn.addEventListener('click', () => {
+                userInput.value = '';
+                userInput.focus();
+                clearInputBtn.style.opacity = '0';
+                sendButton.disabled = true;
+            });
+            
+            clearChatBtn.addEventListener('click', clearChat);
+            
+            chatMessages.addEventListener('click', () => {
+                userInput.focus();
+            });
+            
+            window.addEventListener('resize', () => {
+                setTimeout(() => {
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }, 300);
+            });
+        });
+    </script>
+</body>
+</html>
