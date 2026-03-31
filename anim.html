@@ -1,0 +1,4159 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Anime Stream iOS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase Compat SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        :root {
+            --ios-bg: #000000;
+            --ios-card: #1c1c1e;
+            --ios-card-secondary: #2c2c2e;
+            --ios-blue: #0a84ff;
+            --ios-green: #30d158;
+            --ios-red: #ff453a;
+            --ios-orange: #ff9f0a;
+            --ios-purple: #bf5af2;
+            --ios-pink: #ff375f;
+            --ios-gray: #8e8e93;
+            --ios-light-gray: #48484a;
+            --ios-text: #ffffff;
+            --ios-text-secondary: #98989f;
+        }
+
+        body {
+            background: var(--ios-bg);
+            color: var(--ios-text);
+            overflow-x: hidden;
+            padding-bottom: 80px;
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+            transition: opacity 0.3s;
+        }
+
+        .loading-overlay.hide {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--ios-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Splash Screen */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            transition: opacity 0.8s ease, visibility 0.8s;
+        }
+
+        #splash-screen.hide {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .hello-text {
+            font-size: 48px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #ff375f, #ff9f0a, #30d158, #0a84ff, #bf5af2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: helloAnimation 2s ease-in-out;
+        }
+
+        @keyframes helloAnimation {
+            0% { opacity: 0; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.1); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .splash-loader {
+            margin-top: 30px;
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--ios-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        /* Auth Screen */
+        #auth-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--ios-bg);
+            z-index: 9999;
+            display: none;
+            overflow-y: auto;
+        }
+
+        .auth-container {
+            padding: 40px 24px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .auth-header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .auth-header p {
+            color: var(--ios-text-secondary);
+            font-size: 16px;
+        }
+
+        .auth-tabs {
+            display: flex;
+            background: var(--ios-card);
+            border-radius: 10px;
+            padding: 4px;
+            margin-bottom: 24px;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: var(--ios-text-secondary);
+        }
+
+        .auth-tab.active {
+            background: var(--ios-blue);
+            color: white;
+        }
+
+        .auth-form {
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+        }
+
+        .ios-input-group {
+            margin-bottom: 16px;
+        }
+
+        .ios-input-group label {
+            display: block;
+            font-size: 13px;
+            color: var(--ios-text-secondary);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .ios-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--ios-card);
+            border: 1px solid var(--ios-light-gray);
+            border-radius: 10px;
+            color: var(--ios-text);
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .ios-input:focus {
+            border-color: var(--ios-blue);
+            background: var(--ios-card-secondary);
+        }
+
+        .ios-btn {
+            width: 100%;
+            padding: 16px;
+            background: var(--ios-blue);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 8px;
+        }
+
+        .ios-btn:active {
+            transform: scale(0.98);
+            opacity: 0.8;
+        }
+
+        .ios-btn-secondary {
+            background: var(--ios-card);
+            color: var(--ios-blue);
+            border: 1px solid var(--ios-light-gray);
+        }
+
+        .owner-code-section {
+            display: none;
+            margin-top: 16px;
+            padding: 16px;
+            background: var(--ios-card);
+            border-radius: 12px;
+            border-left: 4px solid var(--ios-orange);
+        }
+
+        .owner-code-section.show {
+            display: block;
+        }
+
+        /* Main App */
+        #main-app {
+            display: none;
+            min-height: 100vh;
+        }
+
+        /* iOS Navigation */
+        .ios-tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(28, 28, 30, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 20px;
+            z-index: 1000;
+        }
+
+        .ios-tab-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: var(--ios-gray);
+        }
+
+        .ios-tab-item.active {
+            color: var(--ios-blue);
+        }
+
+        .ios-tab-item i {
+            font-size: 24px;
+        }
+
+        .ios-tab-item span {
+            font-size: 10px;
+            font-weight: 500;
+        }
+
+        /* Header */
+        .ios-header {
+            position: sticky;
+            top: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .ios-header-title {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .ios-header-actions {
+            display: flex;
+            gap: 16px;
+        }
+
+        .ios-header-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--ios-card);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: var(--ios-blue);
+            font-size: 18px;
+        }
+
+        .ios-header-btn:active {
+            transform: scale(0.9);
+            background: var(--ios-card-secondary);
+        }
+
+        .profile-avatar-small {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--ios-blue);
+        }
+
+        /* Content Pages */
+        .page {
+            display: none;
+            padding: 16px;
+            padding-bottom: 100px;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* Event Banner */
+        .event-banner {
+            width: 100%;
+            height: 180px;
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, var(--ios-purple), var(--ios-pink));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: slideIn 0.8s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .event-content {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .event-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .event-desc {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* Section Headers */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            margin-top: 24px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .section-action {
+            color: var(--ios-blue);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* Anime Grid */
+        .anime-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .anime-card {
+            background: var(--ios-card);
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s;
+            position: relative;
+        }
+
+        .anime-card:active {
+            transform: scale(0.95);
+        }
+
+        .anime-poster {
+            width: 100%;
+            aspect-ratio: 3/4;
+            object-fit: cover;
+            background: var(--ios-card-secondary);
+        }
+
+        .anime-info {
+            padding: 12px;
+        }
+
+        .anime-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .anime-meta {
+            font-size: 12px;
+            color: var(--ios-text-secondary);
+        }
+
+        .anime-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: var(--ios-red);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        /* Search Page */
+        .search-container {
+            padding: 8px 0;
+        }
+
+        .search-box {
+            background: var(--ios-card);
+            border-radius: 12px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .search-box input {
+            flex: 1;
+            background: none;
+            border: none;
+            color: var(--ios-text);
+            font-size: 16px;
+            outline: none;
+        }
+
+        .search-box i {
+            color: var(--ios-gray);
+        }
+
+        .search-results {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .search-item {
+            display: flex;
+            gap: 12px;
+            background: var(--ios-card);
+            padding: 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .search-item:active {
+            background: var(--ios-card-secondary);
+        }
+
+        .search-item img {
+            width: 60px;
+            height: 80px;
+            border-radius: 8px;
+            object-fit: cover;
+            background: var(--ios-card-secondary);
+        }
+
+        .search-item-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .search-item-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .search-item-meta {
+            font-size: 13px;
+            color: var(--ios-text-secondary);
+        }
+
+        .user-search-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--ios-card);
+            padding: 12px;
+            border-radius: 12px;
+            cursor: pointer;
+        }
+
+        .user-search-item img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        /* Anime Detail Page */
+        #anime-detail-page {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--ios-bg);
+            z-index: 2000;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .anime-detail-hero {
+            position: relative;
+            height: 400px;
+            overflow: hidden;
+        }
+
+        .anime-detail-poster {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+        }
+
+        .anime-detail-back {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            width: 40px;
+            height: 40px;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: white;
+            font-size: 20px;
+        }
+
+        .anime-detail-content {
+            padding: 0 20px 20px;
+            margin-top: -100px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .anime-detail-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .anime-detail-meta {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .anime-detail-meta span {
+            background: var(--ios-card);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: var(--ios-text-secondary);
+        }
+
+        .anime-detail-synopsis {
+            font-size: 15px;
+            line-height: 1.6;
+            color: var(--ios-text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .episodes-section {
+            margin-top: 24px;
+        }
+
+        .episodes-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .episode-btn {
+            background: var(--ios-card);
+            border: 1px solid var(--ios-light-gray);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: var(--ios-text);
+            font-weight: 600;
+        }
+
+        .episode-btn:hover {
+            background: var(--ios-blue);
+            border-color: var(--ios-blue);
+        }
+
+        .episode-btn.watched {
+            background: var(--ios-green);
+            border-color: var(--ios-green);
+            color: white;
+        }
+
+        /* Watch Page */
+        #watch-page {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 3000;
+            display: none;
+            flex-direction: column;
+        }
+
+        .watch-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: rgba(0,0,0,0.8);
+        }
+
+        .watch-back {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: white;
+        }
+
+        .watch-title {
+            flex: 1;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .video-container {
+            flex: 1;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .video-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .video-placeholder {
+            text-align: center;
+            color: var(--ios-gray);
+        }
+
+        .video-placeholder i {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .comments-section {
+            background: var(--ios-bg);
+            max-height: 40vh;
+            overflow-y: auto;
+            border-top: 1px solid var(--ios-light-gray);
+        }
+
+        .comment-input-area {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--ios-light-gray);
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .comment-input {
+            flex: 1;
+            background: var(--ios-card);
+            border: none;
+            border-radius: 20px;
+            padding: 12px 16px;
+            color: var(--ios-text);
+            font-size: 15px;
+            outline: none;
+            resize: none;
+            max-height: 100px;
+        }
+
+        .comment-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .comment-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--ios-blue);
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sticker-btn {
+            background: var(--ios-purple);
+        }
+
+        .image-btn {
+            background: var(--ios-green);
+        }
+
+        .comments-list {
+            padding: 16px;
+        }
+
+        .comment-item {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .comment-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid transparent;
+        }
+
+        .comment-avatar.badge-prince {
+            border-color: #ff0000;
+            box-shadow: 0 0 10px #ff0000, 0 0 20px #00ff00, 0 0 30px #0000ff;
+        }
+
+        .comment-avatar.badge-pejabat {
+            border-color: var(--ios-orange);
+            box-shadow: 0 0 8px var(--ios-orange), 0 0 15px var(--ios-green), 0 0 20px var(--ios-pink);
+        }
+
+        .comment-avatar.badge-raja {
+            border-color: gold;
+            box-shadow: 0 0 10px gold, 0 0 20px silver, 0 0 30px purple;
+        }
+
+        .comment-avatar.badge-sepuh {
+            border-color: #ff375f;
+            box-shadow: 0 0 8px #ff375f, 0 0 15px #bf5af2, 0 0 20px #ff9f0a;
+        }
+
+        .comment-content {
+            flex: 1;
+        }
+
+        .comment-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .comment-author {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .badge-icon {
+            font-size: 14px;
+        }
+
+        .comment-time {
+            font-size: 12px;
+            color: var(--ios-gray);
+        }
+
+        .comment-text {
+            font-size: 14px;
+            line-height: 1.4;
+            margin-bottom: 8px;
+        }
+
+        .comment-image {
+            max-width: 200px;
+            max-height: 150px;
+            border-radius: 8px;
+            margin-top: 8px;
+        }
+
+        .comment-sticker {
+            width: 100px;
+            height: 100px;
+            object-fit: contain;
+        }
+
+        .comment-footer {
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
+            color: var(--ios-gray);
+        }
+
+        .comment-action {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: color 0.3s;
+        }
+
+        .comment-action:hover {
+            color: var(--ios-blue);
+        }
+
+        .comment-action.liked {
+            color: var(--ios-red);
+        }
+
+        .replies {
+            margin-left: 52px;
+            margin-top: 12px;
+            padding-left: 12px;
+            border-left: 2px solid var(--ios-light-gray);
+        }
+
+        /* Profile Page */
+        .profile-header {
+            background: var(--ios-card);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 16px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profile-banner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 100px;
+            background: linear-gradient(135deg, var(--ios-blue), var(--ios-purple));
+            opacity: 0.3;
+        }
+
+        .profile-avatar-large {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid var(--ios-bg);
+            position: relative;
+            z-index: 1;
+            margin-top: 30px;
+            background: var(--ios-card-secondary);
+        }
+
+        .profile-name-section {
+            margin-top: 16px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .profile-name {
+            font-size: 24px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .profile-badge-display {
+            font-size: 20px;
+        }
+
+        .profile-level {
+            color: var(--ios-text-secondary);
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        .profile-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--ios-blue);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--ios-text-secondary);
+            margin-top: 4px;
+        }
+
+        /* Bank Style Balance */
+        .balance-card {
+            background: linear-gradient(135deg, #1c1c1e 0%, #2c2c2e 100%);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .balance-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(10,132,255,0.1) 0%, transparent 70%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .balance-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .balance-label {
+            font-size: 14px;
+            color: var(--ios-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .balance-bank-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .balance-amount {
+            font-size: 32px;
+            font-weight: 700;
+            position: relative;
+            z-index: 1;
+            font-family: 'Courier New', monospace;
+            letter-spacing: -1px;
+        }
+
+        .balance-currency {
+            font-size: 16px;
+            color: var(--ios-text-secondary);
+            margin-left: 4px;
+        }
+
+        /* Level Progress */
+        .level-card {
+            background: var(--ios-card);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .level-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .level-current {
+            font-weight: 700;
+            color: var(--ios-orange);
+        }
+
+        .level-xp {
+            font-size: 13px;
+            color: var(--ios-text-secondary);
+        }
+
+        .level-progress-bg {
+            height: 8px;
+            background: var(--ios-card-secondary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .level-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--ios-orange), var(--ios-pink));
+            border-radius: 4px;
+            transition: width 0.5s ease;
+            position: relative;
+        }
+
+        .level-progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* History Section */
+        .history-section {
+            background: var(--ios-card);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .history-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .history-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .history-item {
+            aspect-ratio: 3/4;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .history-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .history-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            padding: 8px;
+            font-size: 11px;
+        }
+
+        /* Settings */
+        .settings-group {
+            background: var(--ios-card);
+            border-radius: 12px;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+
+        .settings-item {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .settings-item:last-child {
+            border-bottom: none;
+        }
+
+        .settings-item:active {
+            background: var(--ios-card-secondary);
+        }
+
+        .settings-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-size: 16px;
+        }
+
+        .settings-icon.blue { background: rgba(10,132,255,0.2); color: var(--ios-blue); }
+        .settings-icon.green { background: rgba(48,209,88,0.2); color: var(--ios-green); }
+        .settings-icon.orange { background: rgba(255,159,10,0.2); color: var(--ios-orange); }
+        .settings-icon.red { background: rgba(255,69,58,0.2); color: var(--ios-red); }
+        .settings-icon.purple { background: rgba(191,90,242,0.2); color: var(--ios-purple); }
+
+        .settings-content {
+            flex: 1;
+        }
+
+        .settings-title {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .settings-subtitle {
+            font-size: 13px;
+            color: var(--ios-text-secondary);
+            margin-top: 2px;
+        }
+
+        .settings-arrow {
+            color: var(--ios-gray);
+            font-size: 14px;
+        }
+
+        /* Shop */
+        .shop-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .shop-item {
+            background: var(--ios-card);
+            border-radius: 16px;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .shop-item:hover {
+            border-color: var(--ios-blue);
+            transform: translateY(-2px);
+        }
+
+        .shop-item.owned {
+            border-color: var(--ios-green);
+            opacity: 0.8;
+        }
+
+        .shop-item.vip-bronze { border-color: #cd7f32; }
+        .shop-item.vip-silver { border-color: #c0c0c0; }
+        .shop-item.vip-gold { border-color: #ffd700; }
+        .shop-item.vip-diamond { border-color: #b9f2ff; }
+        .shop-item.vip-master { border-color: linear-gradient(135deg, #ff0000, #ffff00); }
+
+        .shop-item-icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+        }
+
+        .shop-item-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .shop-item-price {
+            color: var(--ios-orange);
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .shop-item-owned {
+            color: var(--ios-green);
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        /* VIP Badge Styles */
+        .vip-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-left: 8px;
+        }
+
+        .vip-bronze { background: #cd7f32; color: #000; }
+        .vip-silver { background: #c0c0c0; color: #000; }
+        .vip-gold { background: #ffd700; color: #000; }
+        .vip-diamond { background: #b9f2ff; color: #000; }
+        .vip-master { background: linear-gradient(135deg, #ff0000, #ff9f0a); color: white; }
+
+        /* Feed */
+        .feed-compose {
+            background: var(--ios-card);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .feed-input-area {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .feed-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .feed-input {
+            flex: 1;
+            background: var(--ios-card-secondary);
+            border: none;
+            border-radius: 20px;
+            padding: 12px 16px;
+            color: var(--ios-text);
+            font-size: 15px;
+            outline: none;
+            resize: none;
+            min-height: 80px;
+        }
+
+        .feed-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .feed-media-btns {
+            display: flex;
+            gap: 12px;
+        }
+
+        .feed-media-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--ios-card-secondary);
+            border: none;
+            color: var(--ios-blue);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .feed-post-btn {
+            padding: 10px 24px;
+            background: var(--ios-blue);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .feed-item {
+            background: var(--ios-card);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .feed-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .feed-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .feed-user-info {
+            flex: 1;
+        }
+
+        .feed-username {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .feed-time {
+            font-size: 13px;
+            color: var(--ios-gray);
+        }
+
+        .feed-content {
+            font-size: 15px;
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+
+        .feed-image {
+            width: 100%;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            max-height: 400px;
+            object-fit: cover;
+        }
+
+        .feed-footer {
+            display: flex;
+            gap: 24px;
+            padding-top: 12px;
+            border-top: 1px solid var(--ios-light-gray);
+        }
+
+        .feed-action {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--ios-gray);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .feed-action.active {
+            color: var(--ios-red);
+        }
+
+        /* Mini Player */
+        .mini-player {
+            position: fixed;
+            bottom: 80px;
+            right: 16px;
+            width: 160px;
+            height: 90px;
+            background: var(--ios-card);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            z-index: 999;
+            display: none;
+            border: 1px solid var(--ios-light-gray);
+        }
+
+        .mini-player.active {
+            display: block;
+        }
+
+        .mini-player video, .mini-player iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .mini-player-close {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 24px;
+            height: 24px;
+            background: rgba(0,0,0,0.6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: white;
+            font-size: 12px;
+            z-index: 10;
+        }
+
+        /* Owner Panel */
+        .owner-panel {
+            background: linear-gradient(135deg, var(--ios-orange), var(--ios-red));
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            color: white;
+        }
+
+        .owner-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .owner-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .owner-btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+            font-weight: 600;
+        }
+
+        .owner-btn:active {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* Modal */
+        .ios-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            z-index: 5000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .ios-modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--ios-card);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: modalSlide 0.3s ease;
+        }
+
+        @keyframes modalSlide {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--ios-light-gray);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--ios-card-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--ios-gray);
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        /* Upload Form */
+        .upload-form-group {
+            margin-bottom: 16px;
+        }
+
+        .upload-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--ios-text-secondary);
+        }
+
+        .episode-list {
+            max-height: 200px;
+            overflow-y: auto;
+            background: var(--ios-card-secondary);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .episode-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            border-bottom: 1px solid var(--ios-light-gray);
+        }
+
+        .episode-list-item:last-child {
+            border-bottom: none;
+        }
+
+        .remove-episode {
+            color: var(--ios-red);
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        /* User Profile View */
+        #user-profile-view {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--ios-bg);
+            z-index: 2500;
+            overflow-y: auto;
+            display: none;
+        }
+
+        /* Sticker Picker */
+        .sticker-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            padding: 16px;
+        }
+
+        .sticker-item {
+            aspect-ratio: 1;
+            background: var(--ios-card-secondary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 32px;
+            transition: transform 0.2s;
+        }
+
+        .sticker-item:active {
+            transform: scale(0.9);
+        }
+
+        /* Toast Notification */
+        .ios-toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            background: rgba(30, 30, 30, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 16px 24px;
+            border-radius: 16px;
+            color: white;
+            font-weight: 600;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+            text-align: center;
+            min-width: 200px;
+        }
+
+        .ios-toast.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        /* XP Notification */
+        .xp-popup {
+            position: fixed;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: linear-gradient(135deg, var(--ios-orange), var(--ios-pink));
+            color: white;
+            padding: 12px 24px;
+            border-radius: 24px;
+            font-weight: 700;
+            z-index: 9999;
+            opacity: 0;
+            transition: all 0.3s;
+            box-shadow: 0 4px 20px rgba(255, 159, 10, 0.4);
+        }
+
+        .xp-popup.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Online Indicator */
+        .online-indicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            width: 12px;
+            height: 12px;
+            background: var(--ios-green);
+            border-radius: 50%;
+            z-index: 10001;
+            box-shadow: 0 0 10px var(--ios-green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Responsive */
+        @media (min-width: 768px) {
+            .anime-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .shop-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .episodes-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--ios-bg);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--ios-light-gray);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--ios-gray);
+        }
+
+        /* Animations */
+        .pulse-animation {
+            animation: pulseScale 2s infinite;
+        }
+
+        @keyframes pulseScale {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .shimmer {
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<base target="_blank">
+</head>
+<body>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p style="margin-top: 16px; color: var(--ios-text-secondary);">Menyambungkan ke server...</p>
+    </div>
+
+    <!-- Online Indicator -->
+    <div id="online-indicator" class="online-indicator" style="display: none;" title="Terhubung ke server"></div>
+
+    <!-- Splash Screen -->
+    <div id="splash-screen">
+        <div class="hello-text">Hello</div>
+        <div class="splash-loader"></div>
+    </div>
+
+    <!-- Auth Screen -->
+    <div id="auth-screen">
+        <div class="auth-container">
+            <div class="auth-header">
+                <h1>Anime Stream</h1>
+                <p>Nonton anime favoritmu</p>
+            </div>
+
+            <div class="auth-tabs">
+                <div class="auth-tab active" onclick="switchAuthTab('login')">Masuk</div>
+                <div class="auth-tab" onclick="switchAuthTab('register')">Daftar</div>
+            </div>
+
+            <!-- Login Form -->
+            <form id="login-form" class="auth-form active" onsubmit="handleLogin(event)">
+                <div class="ios-input-group">
+                    <label>Username</label>
+                    <input type="text" class="ios-input" id="login-username" required placeholder="Masukkan username">
+                </div>
+                <div class="ios-input-group">
+                    <label>Kata Sandi</label>
+                    <input type="password" class="ios-input" id="login-password" required placeholder="Masukkan password">
+                </div>
+                <div class="ios-input-group">
+                    <label>Model Perangkat</label>
+                    <input type="text" class="ios-input" id="login-device" required placeholder="Contoh: iPhone 15 Pro">
+                </div>
+                <button type="submit" class="ios-btn">Masuk</button>
+            </form>
+
+            <!-- Register Form -->
+            <form id="register-form" class="auth-form" onsubmit="handleRegister(event)">
+                <div class="ios-input-group">
+                    <label>Username</label>
+                    <input type="text" class="ios-input" id="reg-username" required placeholder="Buat username unik">
+                </div>
+                <div class="ios-input-group">
+                    <label>Kata Sandi</label>
+                    <input type="password" class="ios-input" id="reg-password" required placeholder="Buat password">
+                </div>
+                <div class="ios-input-group">
+                    <label>Model Perangkat</label>
+                    <input type="text" class="ios-input" id="reg-device" required placeholder="Contoh: Samsung S24">
+                </div>
+                
+                <div style="margin: 16px 0;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" id="is-owner" onchange="toggleOwnerCode()" style="width: 20px; height: 20px;">
+                        <span>Daftar sebagai Owner</span>
+                    </label>
+                </div>
+
+                <div id="owner-code-section" class="owner-code-section">
+                    <div class="ios-input-group">
+                        <label>Kode Verifikasi Owner</label>
+                        <input type="password" class="ios-input" id="owner-code" placeholder="Masukkan kode owner (10029 atau 10529X)">
+                        <small style="color: var(--ios-gray); font-size: 12px;">Kode: 10029 atau 10529X</small>
+                    </div>
+                </div>
+
+                <button type="submit" class="ios-btn">Verifikasi & Daftar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="main-app">
+        
+        <!-- Header -->
+        <div class="ios-header">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <img id="header-avatar" src="https://via.placeholder.com/36" class="profile-avatar-small" onclick="showPage('profile')" style="cursor: pointer;">
+                <span id="header-username" style="font-weight: 600; font-size: 16px;"></span>
+                <span id="header-badge"></span>
+            </div>
+            <div class="ios-header-actions">
+                <div class="ios-header-btn" onclick="showSearch()">
+                    <i class="fas fa-search"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Home Page -->
+        <div id="home-page" class="page active">
+            <!-- Event Banner -->
+            <div id="event-banner" class="event-banner" style="display: none;">
+                <div class="event-content">
+                    <div class="event-title" id="event-title">Event Spesial!</div>
+                    <div class="event-desc" id="event-desc">Deskripsi event di sini</div>
+                </div>
+            </div>
+
+            <!-- Owner Panel (Only for Owner) -->
+            <div id="owner-panel" style="display: none;">
+                <div class="owner-panel">
+                    <div class="owner-title">👑 Owner Panel</div>
+                    <div class="owner-grid">
+                        <div class="owner-btn" onclick="openUploadModal()">
+                            <i class="fas fa-upload" style="display: block; margin-bottom: 8px; font-size: 24px;"></i>
+                            Upload Anime
+                        </div>
+                        <div class="owner-btn" onclick="openEventModal()">
+                            <i class="fas fa-bullhorn" style="display: block; margin-bottom: 8px; font-size: 24px;"></i>
+                            Buat Event
+                        </div>
+                        <div class="owner-btn" onclick="openLevelEditModal()">
+                            <i class="fas fa-level-up-alt" style="display: block; margin-bottom: 8px; font-size: 24px;"></i>
+                            Edit Level
+                        </div>
+                        <div class="owner-btn" onclick="showToast('Saldo Owner: Unlimited 💎')">
+                            <i class="fas fa-wallet" style="display: block; margin-bottom: 8px; font-size: 24px;"></i>
+                            Cek Saldo
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Anime Terbaru -->
+            <div class="section-header">
+                <div class="section-title">🔥 Anime Terbaru</div>
+                <div class="section-action" onclick="showToast('Menampilkan semua anime terbaru')">Lihat Semua</div>
+            </div>
+            <div class="anime-grid" id="new-anime-grid">
+                <!-- Dynamic content -->
+            </div>
+
+            <!-- Rekomendasi -->
+            <div class="section-header">
+                <div class="section-title">⭐ Rekomendasi</div>
+                <div class="section-action">Lihat Semua</div>
+            </div>
+            <div class="anime-grid" id="recommended-anime-grid">
+                <!-- Dynamic content -->
+            </div>
+
+            <!-- Anime Lama -->
+            <div class="section-header">
+                <div class="section-title">📚 Anime Lama</div>
+                <div class="section-action">Lihat Semua</div>
+            </div>
+            <div class="anime-grid" id="old-anime-grid">
+                <!-- Dynamic content -->
+            </div>
+        </div>
+
+        <!-- Feed Page -->
+        <div id="feed-page" class="page">
+            <div class="feed-compose">
+                <div class="feed-input-area">
+                    <img id="feed-avatar" src="https://via.placeholder.com/44" class="feed-avatar">
+                    <textarea class="feed-input" id="feed-input" placeholder="Apa yang sedang kamu pikirkan tentang anime?"></textarea>
+                </div>
+                <div class="feed-actions">
+                    <div class="feed-media-btns">
+                        <button class="feed-media-btn" onclick="openStickerPicker('feed')">
+                            <i class="fas fa-smile"></i>
+                        </button>
+                        <button class="feed-media-btn" onclick="document.getElementById('feed-image-input').click()">
+                            <i class="fas fa-image"></i>
+                        </button>
+                        <input type="file" id="feed-image-input" accept="image/*" style="display: none;" onchange="handleFeedImage(this)">
+                    </div>
+                    <button class="feed-post-btn" onclick="postFeed()">Posting</button>
+                </div>
+            </div>
+
+            <div id="feed-list">
+                <!-- Dynamic feed items -->
+            </div>
+        </div>
+
+        <!-- Profile Page -->
+        <div id="profile-page" class="page">
+            <!-- Profile Header -->
+            <div class="profile-header">
+                <div class="profile-banner"></div>
+                <img id="profile-avatar" src="https://via.placeholder.com/100" class="profile-avatar-large">
+                <div class="profile-name-section">
+                    <div class="profile-name">
+                        <span id="profile-name-text"></span>
+                        <span id="profile-badge-display" class="profile-badge-display"></span>
+                    </div>
+                    <div class="profile-level">Level <span id="profile-level">1</span> • <span id="profile-rank">Novice</span></div>
+                </div>
+                
+                <div class="profile-stats">
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-anime">0</div>
+                        <div class="stat-label">Anime</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-episodes">0</div>
+                        <div class="stat-label">Episode</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-hours">0</div>
+                        <div class="stat-label">Jam</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bank Style Balance -->
+            <div class="balance-card">
+                <div class="balance-header">
+                    <span class="balance-label">Total Saldo</span>
+                    <div class="balance-bank-icon">
+                        <i class="fas fa-university"></i>
+                    </div>
+                </div>
+                <div class="balance-amount">
+                    <span id="balance-amount">0</span>
+                    <span class="balance-currency">COIN</span>
+                </div>
+            </div>
+
+            <!-- Level Progress -->
+            <div class="level-card">
+                <div class="level-header">
+                    <span class="level-current">Level <span id="level-current">1</span></span>
+                    <span class="level-xp"><span id="xp-current">0</span> / <span id="xp-needed">1000</span> XP</span>
+                </div>
+                <div class="level-progress-bg">
+                    <div class="level-progress-fill" id="level-progress" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- History -->
+            <div class="history-section">
+                <div class="history-title">📺 Riwayat Menonton</div>
+                <div class="history-grid" id="watch-history">
+                    <div style="color: var(--ios-gray); font-size: 14px; grid-column: 1/-1; text-align: center; padding: 20px;">
+                        Belum ada riwayat menonton
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Page -->
+        <div id="settings-page" class="page">
+            <!-- Edit Profile -->
+            <div class="settings-group">
+                <div class="settings-item" onclick="openEditProfileModal()">
+                    <div class="settings-icon blue">
+                        <i class="fas fa-user-edit"></i>
+                    </div>
+                    <div class="settings-content">
+                        <div class="settings-title">Edit Profil</div>
+                        <div class="settings-subtitle">Ubah foto & username</div>
+                    </div>
+                    <i class="fas fa-chevron-right settings-arrow"></i>
+                </div>
+            </div>
+
+            <!-- Info Akun -->
+            <div class="settings-group">
+                <div class="settings-item">
+                    <div class="settings-icon green">
+                        <i class="fas fa-calendar"></i>
+                    </div>
+                    <div class="settings-content">
+                        <div class="settings-title">Bergabung</div>
+                        <div class="settings-subtitle" id="join-date">-</div>
+                    </div>
+                </div>
+                <div class="settings-item">
+                    <div class="settings-icon purple">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <div class="settings-content">
+                        <div class="settings-title">Perangkat</div>
+                        <div class="settings-subtitle" id="device-info">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toko -->
+            <div class="settings-group">
+                <div class="settings-item" onclick="openShop()">
+                    <div class="settings-icon orange">
+                        <i class="fas fa-shopping-bag"></i>
+                    </div>
+                    <div class="settings-content">
+                        <div class="settings-title">Toko</div>
+                        <div class="settings-subtitle">Beli border, badge & VIP</div>
+                    </div>
+                    <i class="fas fa-chevron-right settings-arrow"></i>
+                </div>
+            </div>
+
+            <!-- Owner Settings (Only Owner) -->
+            <div id="owner-settings" style="display: none;">
+                <div class="settings-group">
+                    <div class="settings-item" onclick="openUploadModal()">
+                        <div class="settings-icon orange">
+                            <i class="fas fa-upload"></i>
+                        </div>
+                        <div class="settings-content">
+                            <div class="settings-title">Upload Anime</div>
+                            <div class="settings-subtitle">Tambah anime baru</div>
+                        </div>
+                        <i class="fas fa-chevron-right settings-arrow"></i>
+                    </div>
+                    <div class="settings-item" onclick="openEventModal()">
+                        <div class="settings-icon orange">
+                            <i class="fas fa-bullhorn"></i>
+                        </div>
+                        <div class="settings-content">
+                            <div class="settings-title">Buat Event</div>
+                            <div class="settings-subtitle">Atur event banner</div>
+                        </div>
+                        <i class="fas fa-chevron-right settings-arrow"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Actions -->
+            <div class="settings-group">
+                <div class="settings-item" onclick="openChangePasswordModal()">
+                    <div class="settings-icon blue">
+                        <i class="fas fa-key"></i>
+                    </div>
+                    <div class="settings-content">
+                        <div class="settings-title">Ganti Kata Sandi</div>
+                    </div>
+                    <i class="fas fa-chevron-right settings-arrow"></i>
+                </div>
+                <div class="settings-item" onclick="switchAccount()">
+                    <div class="settings-icon purple">
+                        <i class="fas fa-exchange-alt"></i>
+                    </div>
+                    <div class="settings-content">
+                        <div class="settings-title">Ganti Akun</div>
+                    </div>
+                    <i class="fas fa-chevron-right settings-arrow"></i>
+                </div>
+                <div class="settings-item" onclick="deleteAccount()" style="color: var(--ios-red);">
+                    <div class="settings-icon red">
+                        <i class="fas fa-trash"></i>
+                    </div>
+                    <div class="settings-content">
+                        <div class="settings-title" style="color: var(--ios-red);">Hapus Akun</div>
+                    </div>
+                    <i class="fas fa-chevron-right settings-arrow"></i>
+                </div>
+            </div>
+
+            <div style="text-align: center; padding: 20px; color: var(--ios-gray); font-size: 12px;">
+                Anime Stream v1.0 • Firebase Edition
+            </div>
+        </div>
+
+        <!-- Search Page (Overlay) -->
+        <div id="search-page" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--ios-bg); z-index: 1500; overflow-y: auto;">
+            <div class="ios-header">
+                <div class="ios-header-btn" onclick="closeSearch()">
+                    <i class="fas fa-arrow-left"></i>
+                </div>
+                <div class="ios-header-title">Pencarian</div>
+                <div style="width: 36px;"></div>
+            </div>
+            <div style="padding: 16px;">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="search-input" placeholder="Cari anime atau user..." onkeyup="performSearch(this.value)">
+                    <i class="fas fa-times" style="cursor: pointer;" onclick="document.getElementById('search-input').value=''; performSearch('')"></i>
+                </div>
+                
+                <div style="margin-bottom: 12px; font-weight: 600; color: var(--ios-text-secondary);">Hasil Pencarian</div>
+                <div class="search-results" id="search-results">
+                    <div style="text-align: center; color: var(--ios-gray); padding: 40px;">
+                        <i class="fas fa-search" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+                        <p>Ketik untuk mencari anime atau user</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Bar -->
+        <div class="ios-tab-bar">
+            <div class="ios-tab-item active" onclick="showPage('home')">
+                <i class="fas fa-home"></i>
+                <span>Beranda</span>
+            </div>
+            <div class="ios-tab-item" onclick="showPage('feed')">
+                <i class="fas fa-stream"></i>
+                <span>Feed</span>
+            </div>
+            <div class="ios-tab-item" onclick="showPage('profile')">
+                <i class="fas fa-user"></i>
+                <span>Profil</span>
+            </div>
+            <div class="ios-tab-item" onclick="showPage('settings')">
+                <i class="fas fa-cog"></i>
+                <span>Pengaturan</span>
+            </div>
+        </div>
+
+        <!-- Mini Player -->
+        <div id="mini-player" class="mini-player">
+            <div class="mini-player-close" onclick="closeMiniPlayer()">
+                <i class="fas fa-times"></i>
+            </div>
+            <div id="mini-player-content" style="width: 100%; height: 100%; background: #000; display: flex; align-items: center; justify-content: center; color: var(--ios-gray); font-size: 12px;">
+                <i class="fas fa-play-circle" style="font-size: 24px;"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Anime Detail Page -->
+    <div id="anime-detail-page">
+        <div class="anime-detail-hero">
+            <img id="detail-poster" src="" class="anime-detail-poster">
+            <div class="anime-detail-back" onclick="closeAnimeDetail()">
+                <i class="fas fa-arrow-left"></i>
+            </div>
+        </div>
+        <div class="anime-detail-content">
+            <h1 class="anime-detail-title" id="detail-title"></h1>
+            <div class="anime-detail-meta">
+                <span id="detail-genre"></span>
+                <span id="detail-studio"></span>
+                <span id="detail-status"></span>
+            </div>
+            <div class="anime-detail-synopsis" id="detail-synopsis"></div>
+            
+            <div class="episodes-section">
+                <div class="section-title">Daftar Episode</div>
+                <div class="episodes-grid" id="episodes-list">
+                    <!-- Dynamic episodes -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Watch Page -->
+    <div id="watch-page">
+        <div class="watch-header">
+            <div class="watch-back" onclick="closeWatchPage()">
+                <i class="fas fa-arrow-down"></i>
+            </div>
+            <div class="watch-title" id="watch-title"></div>
+            <div style="width: 40px;"></div>
+        </div>
+        <div class="video-container" id="video-container">
+            <div class="video-placeholder">
+                <i class="fas fa-play-circle"></i>
+                <p>Video akan dimuat di sini</p>
+                <small style="color: var(--ios-gray);">Owner akan mengupload video via link</small>
+            </div>
+        </div>
+        <div class="comments-section">
+            <div class="comment-input-area">
+                <img id="comment-avatar" src="" class="comment-avatar" style="width: 36px; height: 36px;">
+                <textarea class="comment-input" id="comment-input" placeholder="Tulis komentar..." rows="1"></textarea>
+                <div class="comment-actions">
+                    <button class="comment-btn sticker-btn" onclick="openStickerPicker('comment')">
+                        <i class="fas fa-smile"></i>
+                    </button>
+                    <button class="comment-btn image-btn" onclick="document.getElementById('comment-image-input').click()">
+                        <i class="fas fa-image"></i>
+                    </button>
+                    <input type="file" id="comment-image-input" accept="image/*" style="display: none;" onchange="handleCommentImage(this)">
+                    <button class="comment-btn" onclick="postComment()">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="comments-list" id="comments-list">
+                <!-- Dynamic comments -->
+            </div>
+        </div>
+    </div>
+
+    <!-- User Profile View -->
+    <div id="user-profile-view">
+        <div class="ios-header">
+            <div class="ios-header-btn" onclick="closeUserProfile()">
+                <i class="fas fa-arrow-left"></i>
+            </div>
+            <div class="ios-header-title">Profil User</div>
+            <div style="width: 36px;"></div>
+        </div>
+        <div style="padding: 16px;">
+            <div class="profile-header" style="margin-top: 0;">
+                <div class="profile-banner" id="user-banner"></div>
+                <img id="user-view-avatar" src="" class="profile-avatar-large">
+                <div class="profile-name-section">
+                    <div class="profile-name">
+                        <span id="user-view-name"></span>
+                        <span id="user-view-badge"></span>
+                    </div>
+                    <div class="profile-level">Level <span id="user-view-level">1</span></div>
+                </div>
+                <div class="profile-stats">
+                    <div class="stat-item">
+                        <div class="stat-value" id="user-view-anime">0</div>
+                        <div class="stat-label">Anime</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="user-view-joined">-</div>
+                        <div class="stat-label">Bergabung</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Modal -->
+    <div id="upload-modal" class="ios-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Upload Anime</div>
+                <div class="modal-close" onclick="closeModal('upload-modal')">
+                    <i class="fas fa-times"></i>
+                </div>
+            </div>
+            <div class="modal-body">
+                <form onsubmit="handleUpload(event)">
+                    <div class="upload-form-group">
+                        <label class="upload-label">Judul Anime</label>
+                        <input type="text" class="ios-input" id="upload-title" required>
+                    </div>
+                    <div class="upload-form-group">
+                        <label class="upload-label">Link Poster</label>
+                        <input type="url" class="ios-input" id="upload-poster" placeholder="https://..." required>
+                    </div>
+                    <div class="upload-form-group">
+                        <label class="upload-label">Genre</label>
+                        <input type="text" class="ios-input" id="upload-genre" placeholder="Action, Romance, dll" required>
+                    </div>
+                    <div class="upload-form-group">
+                        <label class="upload-label">Studio</label>
+                        <input type="text" class="ios-input" id="upload-studio" required>
+                    </div>
+                    <div class="upload-form-group">
+                        <label class="upload-label">Sinopsis</label>
+                        <textarea class="ios-input" id="upload-synopsis" rows="3" required></textarea>
+                    </div>
+                    <div class="upload-form-group">
+                        <label class="upload-label">Daftar Episode</label>
+                        <div class="episode-list" id="episode-list">
+                            <div style="color: var(--ios-gray); text-align: center; padding: 20px; font-size: 13px;">
+                                Belum ada episode. Tambahkan di bawah.
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                            <input type="number" class="ios-input" id="episode-num" placeholder="No" style="flex: 0 0 80px;">
+                            <input type="url" class="ios-input" id="episode-link" placeholder="Link Video MP4/M3U8/WebM" style="flex: 1;">
+                            <button type="button" class="ios-btn ios-btn-secondary" onclick="addEpisode()" style="flex: 0 0 100px; margin-top: 0;">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <small style="color: var(--ios-gray); font-size: 12px; display: block; margin-bottom: 16px;">
+                            <i class="fas fa-info-circle"></i> 
+                            Support: Direct MP4, M3U8 (HLS), WebM. Bukan link YouTube!
+                        </small>
+                    </div>
+                    <button type="submit" class="ios-btn">Upload Anime</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Modal -->
+    <div id="event-modal" class="ios-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Buat Event</div>
+                <div class="modal-close" onclick="closeModal('event-modal')">
+                    <i class="fas fa-times"></i>
+                </div>
+            </div>
+            <div class="modal-body">
+                <form onsubmit="handleCreateEvent(event)">
+                    <div class="upload-form-group">
+                        <label class="upload-label">Judul Event</label>
+                        <input type="text" class="ios-input" id="event-title-input" required>
+                    </div>
+                    <div class="upload-form-group">
+                        <label class="upload-label">Deskripsi</label>
+                        <textarea class="ios-input" id="event-desc-input" rows="3" required></textarea>
+                    </div>
+                    <div class="upload-form-group">
+                        <label class="upload-label">Gambar Event (Link)</label>
+                        <input type="url" class="ios-input" id="event-image-input" placeholder="https://...">
+                    </div>
+                    <button type="submit" class="ios-btn">Simpan Event</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Level Edit Modal -->
+    <div id="level-modal" class="ios-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Edit Level User</div>
+                <div class="modal-close" onclick="closeModal('level-modal')">
+                    <i class="fas fa-times"></i>
+                </div>
+            </div>
+            <div class="modal-body">
+                <form onsubmit="handleEditLevel(event)">
+                    <div class="upload-form-group">
+                        <label class="upload-label">Username Target</label>
+                        <input type="text" class="ios-input" id="level-target-user" required>
+                    </div>
+                    <div class="upload-form-group">
+                        <label class="upload-label">Level Baru</label>
+                        <input type="number" class="ios-input" id="new-level" min="1" required>
+                    </div>
+                    <div class="upload-form-group">
+                        <label class="upload-label">XP yang Dibutuhkan</label>
+                        <input type="number" class="ios-input" id="new-xp-needed" min="100" required>
+                    </div>
+                    <div class="upload-form-group">
+                        <label class="upload-label">Hadiah (Coin)</label>
+                        <input type="number" class="ios-input" id="level-reward" min="0" value="0">
+                    </div>
+                    <button type="submit" class="ios-btn">Update Level</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div id="edit-profile-modal" class="ios-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Edit Profil</div>
+                <div class="modal-close" onclick="closeModal('edit-profile-modal')">
+                    <i class="fas fa-times"></i>
+                </div>
+            </div>
+            <div class="modal-body">
+                <form onsubmit="handleEditProfile(event)">
+                    <div class="upload-form-group">
+                        <label class="upload-label">Foto Profil (Link)</label>
+                        <input type="url" class="ios-input" id="edit-avatar" placeholder="https://...">
+                    </div>
+                    <div class="upload-form-group">
+                        <label class="upload-label">Username Baru</label>
+                        <input type="text" class="ios-input" id="edit-username" placeholder="Biarkan kosong jika tidak ingin mengubah">
+                        <small style="color: var(--ios-gray); font-size: 12px;">Bisa diubah 1x dalam 7 hari</small>
+                    </div>
+                    <button type="submit" class="ios-btn">Simpan Perubahan</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="change-password-modal" class="ios-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Ganti Kata Sandi</div>
+                <div class="modal-close" onclick="closeModal('change-password-modal')">
+                    <i class="fas fa-times"></i>
+                </div>
+            </div>
+            <div class="modal-body">
+                <form onsubmit="handleChangePassword(event)">
+                    <div class="upload-form-group">
+                        <label class="upload-label">Kata Sandi Lama</label>
+                        <input type="password" class="ios-input" id="old-password" required>
+                    </div>
+                    <div class="upload-form-group">
+                        <label class="upload-label">Kata Sandi Baru</label>
+                        <input type="password" class="ios-input" id="new-password" required>
+                    </div>
+                    <div class="upload-form-group">
+                        <label class="upload-label">Konfirmasi Kata Sandi Baru</label>
+                        <input type="password" class="ios-input" id="confirm-password" required>
+                    </div>
+                    <button type="submit" class="ios-btn">Ganti Kata Sandi</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shop Modal -->
+    <div id="shop-modal" class="ios-modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <div class="modal-title">🛒 Toko Item</div>
+                <div class="modal-close" onclick="closeModal('shop-modal')">
+                    <i class="fas fa-times"></i>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 20px; padding: 16px; background: var(--ios-card-secondary); border-radius: 12px;">
+                    <div style="font-size: 14px; color: var(--ios-text-secondary); margin-bottom: 4px;">Saldo Anda</div>
+                    <div style="font-size: 24px; font-weight: 700; color: var(--ios-orange);">
+                        <span id="shop-balance">0</span> COIN
+                    </div>
+                </div>
+
+                <div class="section-title" style="margin-bottom: 12px;">Border Profile</div>
+                <div class="shop-grid" style="margin-bottom: 24px;">
+                    <div class="shop-item" onclick="buyItem('border', 'gold', 500)">
+                        <div class="shop-item-icon">🟡</div>
+                        <div class="shop-item-name">Border Gold</div>
+                        <div class="shop-item-price">500</div>
+                    </div>
+                    <div class="shop-item" onclick="buyItem('border', 'rainbow', 1000)">
+                        <div class="shop-item-icon">🌈</div>
+                        <div class="shop-item-name">Border Rainbow</div>
+                        <div class="shop-item-price">1.000</div>
+                    </div>
+                </div>
+
+                <div class="section-title" style="margin-bottom: 12px;">Badge</div>
+                <div class="shop-grid" style="margin-bottom: 24px;">
+                    <div class="shop-item" onclick="buyItem('badge', 'bronze', 500)">
+                        <div class="shop-item-icon">🥉</div>
+                        <div class="shop-item-name">Bronze</div>
+                        <div class="shop-item-price">500</div>
+                    </div>
+                    <div class="shop-item" onclick="buyItem('badge', 'silver', 1000)">
+                        <div class="shop-item-icon">🥈</div>
+                        <div class="shop-item-name">Silver</div>
+                        <div class="shop-item-price">1.000</div>
+                    </div>
+                    <div class="shop-item" onclick="buyItem('badge', 'master', 2000)">
+                        <div class="shop-item-icon">🎖️</div>
+                        <div class="shop-item-name">Master</div>
+                        <div class="shop-item-price">2.000</div>
+                    </div>
+                    <div class="shop-item" onclick="buyItem('badge', 'raja', 5000)">
+                        <div class="shop-item-icon">👑</div>
+                        <div class="shop-item-name">Aku Raja</div>
+                        <div class="shop-item-price">5.000</div>
+                    </div>
+                </div>
+
+                <div class="section-title" style="margin-bottom: 12px;">Badge Eksklusif (ID 1-20)</div>
+                <div style="background: var(--ios-card-secondary); border-radius: 12px; padding: 16px; margin-bottom: 24px; opacity: 0.8;">
+                    <div style="font-size: 13px; color: var(--ios-text-secondary); margin-bottom: 12px;">
+                        Badge ini hanya bisa didapatkan jika ID user kamu 1-20. Tidak bisa dibeli!
+                    </div>
+                    <div class="shop-grid">
+                        <div class="shop-item" style="border-color: #ff0000;">
+                            <div class="shop-item-icon" style="filter: drop-shadow(0 0 8px rgba(255,0,0,0.5));">🤴</div>
+                            <div class="shop-item-name">Prince (ID: 1)</div>
+                            <div style="font-size: 12px; color: var(--ios-red);">RGB Effect</div>
+                        </div>
+                        <div class="shop-item" style="border-color: #ffa500;">
+                            <div class="shop-item-icon" style="filter: drop-shadow(0 0 8px orange);">🏛️</div>
+                            <div class="shop-item-name">Pejabat (ID: 4-10)</div>
+                            <div style="font-size: 12px; color: var(--ios-orange);">Oren/Hijau/Pink</div>
+                        </div>
+                        <div class="shop-item" style="border-color: gold;">
+                            <div class="shop-item-icon" style="filter: drop-shadow(0 0 8px gold);">👑</div>
+                            <div class="shop-item-name">Aku Raja (ID: 10-15)</div>
+                            <div style="font-size: 12px; color: gold;">Emas/Perak/Ungu</div>
+                        </div>
+                        <div class="shop-item" style="border-color: #ff1493;">
+                            <div class="shop-item-icon" style="filter: drop-shadow(0 0 8px #ff1493);">🗿</div>
+                            <div class="shop-item-name">Sepuh (ID: 15-20)</div>
+                            <div style="font-size: 12px; color: #ff1493;">Merah/Ungu/Pink/Oren</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-title" style="margin-bottom: 12px;">VIP Membership</div>
+                <div class="shop-grid">
+                    <div class="shop-item vip-bronze" onclick="buyItem('vip', 'bronze', 10000)">
+                        <div class="shop-item-icon">🥉</div>
+                        <div class="shop-item-name">VIP Bronze</div>
+                        <div class="shop-item-price">10.000</div>
+                    </div>
+                    <div class="shop-item vip-silver" onclick="buyItem('vip', 'silver', 25000)">
+                        <div class="shop-item-icon">🥈</div>
+                        <div class="shop-item-name">VIP Silver</div>
+                        <div class="shop-item-price">25.000</div>
+                    </div>
+                    <div class="shop-item vip-gold" onclick="buyItem('vip', 'gold', 50000)">
+                        <div class="shop-item-icon">🥇</div>
+                        <div class="shop-item-name">VIP Gold</div>
+                        <div class="shop-item-price">50.000</div>
+                    </div>
+                    <div class="shop-item vip-diamond" onclick="buyItem('vip', 'diamond', 100000)">
+                        <div class="shop-item-icon">💎</div>
+                        <div class="shop-item-name">VIP Diamond</div>
+                        <div class="shop-item-price">100.000</div>
+                    </div>
+                    <div class="shop-item vip-master" onclick="buyItem('vip', 'master', 250000)" style="grid-column: 1/-1;">
+                        <div class="shop-item-icon">👑</div>
+                        <div class="shop-item-name">VIP Master</div>
+                        <div class="shop-item-price">250.000</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sticker Picker Modal -->
+    <div id="sticker-modal" class="ios-modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <div class="modal-title">Pilih Sticker</div>
+                <div class="modal-close" onclick="closeModal('sticker-modal')">
+                    <i class="fas fa-times"></i>
+                </div>
+            </div>
+            <div class="sticker-grid" id="sticker-grid">
+                <!-- Dynamic stickers -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="ios-toast"></div>
+
+    <!-- XP Popup -->
+    <div id="xp-popup" class="xp-popup">+10 XP</div>
+
+    <script>
+        // ==================== FIREBASE CONFIGURATION ====================
+        // KONFIGURASI FIREBASE - SUDAH TERISI DENGAN DATA ANDA
+        const firebaseConfig = {
+            apiKey: "AIzaSyDtmPzGoRmpof0Y_wynJTQ9EF-trkq05L0",
+            authDomain: "nanimexid.firebaseapp.com",
+            databaseURL: "https://nanimexid-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "nanimexid",
+            storageBucket: "nanimexid.firebasestorage.app",
+            messagingSenderId: "896226486036",
+            appId: "1:896226486036:web:4d33d882ce76acda9fc401",
+            measurementId: "G-L12WQ1SD0P"
+        };
+
+        // Initialize Firebase dengan better error handling
+        let app, database, auth;
+        let firebaseInitialized = false;
+        let firebaseError = null;
+
+        try {
+            // Check if Firebase SDK loaded
+            if (typeof firebase === 'undefined') {
+                throw new Error('Firebase SDK not loaded');
+            }
+
+            app = firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            auth = firebase.auth();
+            firebaseInitialized = true;
+            firebaseError = null;
+            console.log("✓ Firebase initialized successfully");
+
+            // Test connection
+            database.ref('.info/connected').on('value', (snap) => {
+                if (snap.val() === true) {
+                    console.log('✓ Connected to Firebase');
+                } else {
+                    console.log('✗ Disconnected from Firebase');
+                }
+            });
+
+        } catch (error) {
+            console.error("✗ Firebase initialization failed:", error);
+            firebaseInitialized = false;
+            firebaseError = error.message;
+            showToast('Mode Offline: Data tersimpan di perangkat');
+        }
+
+        // Data Management
+        let currentUser = null;
+        let currentAnime = null;
+        let currentEpisode = null;
+        let tempEpisodes = [];
+        let stickerTarget = null;
+        let feedImageAttachment = null;
+        let commentImageAttachment = null;
+        let xpInterval = null;
+        let animeListener = null;
+        let feedListener = null;
+        let eventListener = null;
+        let commentsListener = null;
+
+        // ==================== FIREBASE FUNCTIONS ====================
+
+        // Get reference to database
+        function getDbRef(path) {
+            if (!firebaseInitialized) return null;
+            return database.ref(path);
+        }
+
+        // Save data to Firebase dengan retry logic
+        async function saveToFirebase(path, data) {
+            if (!firebaseInitialized) {
+                // Fallback to localStorage
+                try {
+                    localStorage.setItem('animeStream_' + path.replace(/\//g, '_'), JSON.stringify(data));
+                    return true;
+                } catch (e) {
+                    console.error('localStorage save failed:', e);
+                    return false;
+                }
+            }
+
+            // Retry logic
+            let retries = 3;
+            while (retries > 0) {
+                try {
+                    await getDbRef(path).set(data);
+                    return true;
+                } catch (error) {
+                    console.error(`Save to Firebase failed (retries left: ${retries}):`, error);
+                    retries--;
+                    if (retries === 0) {
+                        // Fallback to localStorage
+                        localStorage.setItem('animeStream_' + path.replace(/\//g, '_'), JSON.stringify(data));
+                        showToast('Data disimpan offline (Firebase error)');
+                        return false;
+                    }
+                    // Wait before retry
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+            }
+            return false;
+        }
+
+        // Read data from Firebase dengan error handling
+        async function readFromFirebase(path) {
+            if (!firebaseInitialized) {
+                // Fallback to localStorage
+                try {
+                    const data = localStorage.getItem('animeStream_' + path.replace(/\//g, '_'));
+                    return data ? JSON.parse(data) : null;
+                } catch (e) {
+                    console.error('localStorage read failed:', e);
+                    return null;
+                }
+            }
+
+            try {
+                const snapshot = await getDbRef(path).once('value');
+                return snapshot.val();
+            } catch (error) {
+                console.error("Read from Firebase failed:", error);
+                // Try localStorage as fallback
+                try {
+                    const data = localStorage.getItem('animeStream_' + path.replace(/\//g, '_'));
+                    if (data) {
+                        showToast('Menggunakan data offline');
+                        return JSON.parse(data);
+                    }
+                } catch (e) {}
+                return null;
+            }
+        }
+
+        // Listen to real-time updates
+        function listenToFirebase(path, callback) {
+            if (!firebaseInitialized) {
+                console.warn("Firebase not initialized, real-time updates disabled");
+                return null;
+            }
+            const ref = getDbRef(path);
+            ref.on('value', (snapshot) => {
+                callback(snapshot.val());
+            });
+            return ref;
+        }
+
+        // Initialize Data dengan better error handling
+        async function initData() {
+            try {
+                // Check if anime data exists in Firebase
+                const animeData = await readFromFirebase('anime');
+
+                if (!animeData || Object.keys(animeData).length === 0) {
+                    // Initialize empty anime database
+                    console.log('Initializing empty anime database...');
+                    await saveToFirebase('anime', {});
+                } else {
+                    // Load existing data
+                    loadAnimeFromData(animeData);
+                }
+
+                // Setup real-time listeners
+                setupRealtimeListeners();
+
+            } catch (error) {
+                console.error('Error initializing data:', error);
+                // Continue with empty data
+                loadAnimeFromData({});
+                setupRealtimeListeners();
+            }
+        }
+
+        function setupRealtimeListeners() {
+            // Cleanup existing listeners first
+            cleanupListeners();
+
+            if (!firebaseInitialized) {
+                console.log('Firebase not initialized, skipping real-time listeners');
+                // Load from localStorage
+                loadOfflineData();
+                return;
+            }
+
+            try {
+                // Listen to anime updates
+                animeListener = listenToFirebase('anime', (data) => {
+                    if (data) {
+                        loadAnimeFromData(data);
+                    } else {
+                        loadAnimeFromData({});
+                    }
+                });
+
+                // Listen to feed updates
+                feedListener = listenToFirebase('feed', (data) => {
+                    if (data) {
+                        loadFeedFromData(data);
+                    } else {
+                        loadFeedFromData({});
+                    }
+                });
+
+                // Listen to event updates
+                eventListener = listenToFirebase('event', (data) => {
+                    loadEventFromData(data);
+                });
+
+                console.log('✓ Real-time listeners active');
+            } catch (error) {
+                console.error('Error setting up listeners:', error);
+                loadOfflineData();
+            }
+        }
+
+        // Cleanup function untuk mencegah memory leaks
+        function cleanupListeners() {
+            if (animeListener) {
+                animeListener.off();
+                animeListener = null;
+            }
+            if (feedListener) {
+                feedListener.off();
+                feedListener = null;
+            }
+            if (eventListener) {
+                eventListener.off();
+                eventListener = null;
+            }
+            if (commentsListener) {
+                commentsListener.off();
+                commentsListener = null;
+            }
+        }
+
+        // Load data dari localStorage saat offline
+        function loadOfflineData() {
+            try {
+                const animeData = localStorage.getItem('animeStream_anime');
+                if (animeData) {
+                    loadAnimeFromData(JSON.parse(animeData));
+                }
+
+                const feedData = localStorage.getItem('animeStream_feed');
+                if (feedData) {
+                    loadFeedFromData(JSON.parse(feedData));
+                }
+
+                const eventData = localStorage.getItem('animeStream_event');
+                if (eventData) {
+                    loadEventFromData(JSON.parse(eventData));
+                }
+            } catch (e) {
+                console.error('Error loading offline data:', e);
+            }
+        }
+
+        // Splash Screen
+        window.onload = async function() {
+            await initData();
+            setTimeout(() => {
+                document.getElementById('splash-screen').classList.add('hide');
+                document.getElementById('loading-overlay').classList.add('hide');
+                document.getElementById('online-indicator').style.display = firebaseInitialized ? 'block' : 'none';
+                setTimeout(() => {
+                    checkAuth();
+                }, 800);
+            }, 2500);
+        };
+
+        function checkAuth() {
+            const session = localStorage.getItem('animeStreamSession');
+            if (session) {
+                currentUser = JSON.parse(session);
+                showMainApp();
+            } else {
+                document.getElementById('auth-screen').style.display = 'block';
+            }
+        }
+
+        // Auth Functions
+        function switchAuthTab(tab) {
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+            
+            if (tab === 'login') {
+                document.querySelectorAll('.auth-tab')[0].classList.add('active');
+                document.getElementById('login-form').classList.add('active');
+            } else {
+                document.querySelectorAll('.auth-tab')[1].classList.add('active');
+                document.getElementById('register-form').classList.add('active');
+            }
+        }
+
+        function toggleOwnerCode() {
+            const checkbox = document.getElementById('is-owner');
+            const section = document.getElementById('owner-code-section');
+            if (checkbox.checked) {
+                section.classList.add('show');
+            } else {
+                section.classList.remove('show');
+            }
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            const username = document.getElementById('reg-username').value;
+            const password = document.getElementById('reg-password').value;
+            const device = document.getElementById('reg-device').value;
+            const isOwner = document.getElementById('is-owner').checked;
+            const ownerCode = document.getElementById('owner-code').value;
+
+            if (isOwner) {
+                if (ownerCode !== '10029' && ownerCode !== '10529X') {
+                    showToast('Kode owner salah! Gunakan 10029 atau 10529X');
+                    return;
+                }
+            }
+
+            // Check if username exists
+            const users = await readFromFirebase('users') || {};
+            if (Object.values(users).find(u => u.username === username)) {
+                showToast('Username sudah digunakan!');
+                return;
+            }
+
+            const userId = Date.now().toString();
+            const newUser = {
+                id: userId,
+                username: username,
+                password: password,
+                device: device,
+                isOwner: isOwner,
+                avatar: 'https://ui-avatars.com/api/?name=' + encodeURIComponent(username) + '&background=random',
+                level: 1,
+                xp: 0,
+                xpNeeded: 1000,
+                balance: isOwner ? 999999999 : 0,
+                joinDate: new Date().toISOString(),
+                lastUsernameChange: null,
+                inventory: {
+                    borders: [],
+                    badges: [],
+                    vip: null
+                },
+                watchHistory: {}
+            };
+
+            // Save to Firebase
+            await saveToFirebase(`users/${userId}`, newUser);
+            
+            // Auto login after register
+            currentUser = newUser;
+            localStorage.setItem('animeStreamSession', JSON.stringify(currentUser));
+            
+            showToast('Akun berhasil dibuat! Selamat datang, ' + username);
+            showMainApp();
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            const device = document.getElementById('login-device').value;
+
+            const users = await readFromFirebase('users') || {};
+            const user = Object.values(users).find(u => u.username === username && u.password === password);
+
+            if (!user) {
+                showToast('Username atau password salah!');
+                return;
+            }
+
+            user.device = device; // Update device
+            currentUser = user;
+            
+            // Update in Firebase
+            await saveToFirebase(`users/${user.id}`, user);
+            
+            localStorage.setItem('animeStreamSession', JSON.stringify(currentUser));
+
+            showToast('Selamat datang kembali, ' + username + '!');
+            showMainApp();
+        }
+
+        function showMainApp() {
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('main-app').style.display = 'block';
+            
+            updateUserUI();
+            
+            if (currentUser.isOwner) {
+                document.getElementById('owner-panel').style.display = 'block';
+                document.getElementById('owner-settings').style.display = 'block';
+            }
+        }
+
+        // Navigation
+        function showPage(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.ios-tab-item').forEach(t => t.classList.remove('active'));
+            
+            document.getElementById(page + '-page').classList.add('active');
+            
+            const tabIndex = page === 'home' ? 0 : page === 'feed' ? 1 : page === 'profile' ? 2 : 3;
+            document.querySelectorAll('.ios-tab-item')[tabIndex].classList.add('active');
+            
+            if (page === 'profile') {
+                updateProfilePage();
+            }
+        }
+
+        function showSearch() {
+            document.getElementById('search-page').style.display = 'block';
+            document.getElementById('search-input').focus();
+        }
+
+        function closeSearch() {
+            document.getElementById('search-page').style.display = 'none';
+            document.getElementById('search-input').value = '';
+            document.getElementById('search-results').innerHTML = `
+                <div style="text-align: center; color: var(--ios-gray); padding: 40px;">
+                    <i class="fas fa-search" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+                    <p>Ketik untuk mencari anime atau user</p>
+                </div>
+            `;
+        }
+
+        // User UI Updates
+        function updateUserUI() {
+            document.getElementById('header-username').textContent = currentUser.username;
+            document.getElementById('header-avatar').src = currentUser.avatar;
+            
+            // Update badge display
+            const badge = getUserBadge(currentUser.id);
+            if (badge) {
+                document.getElementById('header-badge').innerHTML = badge;
+            }
+        }
+
+        function getUserBadge(userId) {
+            // Check exclusive badges by user ID
+            if (userId === '1' || userId === 1) return '<span style="color: #ff0000; text-shadow: 0 0 10px #ff0000;">🤴</span>';
+            if ((userId >= 4 && userId <= 10) || (userId >= '4' && userId <= '10')) return '<span style="color: #ffa500;">🏛️</span>';
+            if ((userId >= 10 && userId <= 15) || (userId >= '10' && userId <= '15')) return '<span style="color: gold;">👑</span>';
+            if ((userId >= 15 && userId <= 20) || (userId >= '15' && userId <= '20')) return '<span style="color: #ff1493;">🗿</span>';
+            
+            // Check inventory
+            if (currentUser.inventory && currentUser.inventory.badges) {
+                if (currentUser.inventory.badges.includes('raja')) return '👑';
+                if (currentUser.inventory.badges.includes('master')) return '🎖️';
+                if (currentUser.inventory.badges.includes('silver')) return '🥈';
+                if (currentUser.inventory.badges.includes('bronze')) return '🥉';
+            }
+            
+            return '';
+        }
+
+        function getBadgeClass(userId) {
+            if (userId === '1' || userId === 1) return 'badge-prince';
+            if ((userId >= 4 && userId <= 10) || (userId >= '4' && userId <= '10')) return 'badge-pejabat';
+            if ((userId >= 10 && userId <= 15) || (userId >= '10' && userId <= '15')) return 'badge-raja';
+            if ((userId >= 15 && userId <= 20) || (userId >= '15' && userId <= '20')) return 'badge-sepuh';
+            return '';
+        }
+
+        // Anime Functions
+        function loadAnimeFromData(animeData) {
+            const anime = Object.values(animeData);
+            const now = new Date();
+            
+            const newAnime = anime.filter(a => {
+                const uploadDate = new Date(a.uploadDate);
+                const diffDays = (now - uploadDate) / (1000 * 60 * 60 * 24);
+                return diffDays <= 7;
+            }).sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
+            
+            const recommended = anime.filter(a => a.views > 5000).sort((a, b) => b.views - a.views);
+            const oldAnime = anime.filter(a => {
+                const uploadDate = new Date(a.uploadDate);
+                const diffDays = (now - uploadDate) / (1000 * 60 * 60 * 24);
+                return diffDays > 30 || a.views < 1000;
+            });
+
+            renderAnimeGrid('new-anime-grid', newAnime);
+            renderAnimeGrid('recommended-anime-grid', recommended);
+            renderAnimeGrid('old-anime-grid', oldAnime);
+        }
+
+        function renderAnimeGrid(containerId, animeList) {
+            const container = document.getElementById(containerId);
+            if (animeList.length === 0) {
+                container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--ios-gray); padding: 20px;">Tidak ada anime</div>';
+                return;
+            }
+            
+            container.innerHTML = animeList.map(anime => {
+                const episodeCount = anime.episodes ? Object.keys(anime.episodes).length : 0;
+                return `
+                    <div class="anime-card" onclick="openAnimeDetail(${anime.id})">
+                        <img src="${anime.poster}" class="anime-poster" onerror="this.src='https://via.placeholder.com/300x400?text=No+Image'">
+                        ${episodeCount > 0 ? `<div class="anime-badge">EP ${episodeCount}</div>` : ''}
+                        <div class="anime-info">
+                            <div class="anime-title">${anime.title}</div>
+                            <div class="anime-meta">${anime.genre.split(',')[0]} • ${anime.views.toLocaleString()} views</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function openAnimeDetail(animeId) {
+            const animeData = await readFromFirebase('anime') || {};
+            const anime = Object.values(animeData).find(a => a.id == animeId);
+            if (!anime) return;
+            
+            currentAnime = anime;
+            
+            document.getElementById('detail-poster').src = anime.poster;
+            document.getElementById('detail-title').textContent = anime.title;
+            document.getElementById('detail-genre').textContent = anime.genre;
+            document.getElementById('detail-studio').textContent = anime.studio;
+            document.getElementById('detail-status').textContent = anime.status;
+            document.getElementById('detail-synopsis').textContent = anime.synopsis;
+            
+            const episodesList = document.getElementById('episodes-list');
+            const episodes = anime.episodes ? Object.values(anime.episodes) : [];
+            
+            if (episodes.length === 0) {
+                episodesList.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--ios-gray); padding: 20px;">Belum ada episode tersedia</div>';
+            } else {
+                episodesList.innerHTML = episodes.sort((a, b) => a.num - b.num).map(ep => `
+                    <div class="episode-btn ${isWatched(anime.id, ep.num) ? 'watched' : ''}" onclick="openWatchPage(${anime.id}, ${ep.num})">
+                        EP ${ep.num}
+                    </div>
+                `).join('');
+            }
+            
+            document.getElementById('anime-detail-page').style.display = 'block';
+        }
+
+        function closeAnimeDetail() {
+            document.getElementById('anime-detail-page').style.display = 'none';
+            currentAnime = null;
+        }
+
+        function isWatched(animeId, episodeNum) {
+            if (!currentUser.watchHistory) return false;
+            return Object.values(currentUser.watchHistory).some(h => h.animeId == animeId && h.episode == episodeNum);
+        }
+
+        // Watch Page
+        async function openWatchPage(animeId, episodeNum) {
+            const animeData = await readFromFirebase('anime') || {};
+            const anime = Object.values(animeData).find(a => a.id == animeId);
+            const episodes = anime.episodes ? Object.values(anime.episodes) : [];
+            const episode = episodes.find(e => e.num == episodeNum);
+            
+            currentEpisode = { animeId, episodeNum, animeTitle: anime.title };
+            
+            document.getElementById('watch-title').textContent = `${anime.title} - Episode ${episodeNum}`;
+            document.getElementById('comment-avatar').src = currentUser.avatar;
+            
+            // Load video - Support MP4 direct link
+            const container = document.getElementById('video-container');
+            if (episode && episode.link) {
+                if (episode.link.includes('.mp4') || episode.link.includes('.m3u8') || episode.link.includes('.webm')) {
+                    // Direct video file
+                    container.innerHTML = `
+                        <video controls autoplay style="width: 100%; height: 100%; background: #000;">
+                            <source src="${episode.link}" type="video/mp4">
+                            Browser tidak support video tag.
+                        </video>
+                    `;
+                } else if (episode.link.includes('youtube') || episode.link.includes('youtu.be')) {
+                    // YouTube embed (fallback)
+                    container.innerHTML = `<iframe src="${episode.link}" allowfullscreen></iframe>`;
+                } else {
+                    container.innerHTML = `
+                        <div class="video-placeholder">
+                            <i class="fas fa-play-circle"></i>
+                            <p>Format video tidak didukung</p>
+                            <small>URL: ${episode.link}</small>
+                        </div>
+                    `;
+                }
+            } else {
+                container.innerHTML = `
+                    <div class="video-placeholder">
+                        <i class="fas fa-play-circle"></i>
+                        <p>Video belum tersedia</p>
+                        <small>Episode akan segera diupload oleh owner</small>
+                    </div>
+                `;
+            }
+            
+            // Setup real-time comments
+            setupCommentsListener(animeId, episodeNum);
+            
+            document.getElementById('watch-page').style.display = 'flex';
+            
+            // Start XP timer
+            startXPTimer();
+            
+            // Add to history
+            addToWatchHistory(animeId, episodeNum);
+            
+            // Increment views
+            incrementAnimeViews(animeId);
+        }
+
+        async function incrementAnimeViews(animeId) {
+            const animeData = await readFromFirebase('anime') || {};
+            if (animeData[animeId]) {
+                animeData[animeId].views = (animeData[animeId].views || 0) + 1;
+                await saveToFirebase('anime', animeData);
+            }
+        }
+
+        function setupCommentsListener(animeId, episodeNum) {
+            // Remove previous listener
+            if (commentsListener) {
+                commentsListener.off();
+            }
+            
+            if (!firebaseInitialized) {
+                // Load from localStorage fallback
+                const comments = JSON.parse(localStorage.getItem(`comments_${animeId}_${episodeNum}`) || '[]');
+                renderComments(comments);
+                return;
+            }
+            
+            commentsListener = listenToFirebase(`comments/${animeId}/${episodeNum}`, (data) => {
+                if (data) {
+                    const comments = Object.values(data);
+                    renderComments(comments);
+                } else {
+                    renderComments([]);
+                }
+            });
+        }
+
+        function closeWatchPage() {
+            document.getElementById('watch-page').style.display = 'none';
+            document.getElementById('video-container').innerHTML = `
+                <div class="video-placeholder">
+                    <i class="fas fa-play-circle"></i>
+                    <p>Video akan dimuat di sini</p>
+                </div>
+            `;
+            
+            // Stop XP timer
+            stopXPTimer();
+            
+            // Remove comments listener
+            if (commentsListener) {
+                commentsListener.off();
+                commentsListener = null;
+            }
+            
+            // Show mini player if video was playing
+            if (currentEpisode) {
+                document.getElementById('mini-player').classList.add('active');
+            }
+        }
+
+        function startXPTimer() {
+            let seconds = 0;
+            xpInterval = setInterval(() => {
+                seconds++;
+                if (seconds % 10 === 0) { // Every 10 seconds
+                    addXP(10);
+                    showXPPopup('+10 XP');
+                    
+                    // Add coin every minute
+                    if (seconds % 60 === 0) {
+                        addCoins(1000);
+                        showToast('+1000 Coin untuk menonton!');
+                    }
+                }
+            }, 1000);
+        }
+
+        function stopXPTimer() {
+            if (xpInterval) {
+                clearInterval(xpInterval);
+                xpInterval = null;
+            }
+        }
+
+        async function addXP(amount) {
+            currentUser.xp += amount;
+            
+            // Check level up
+            while (currentUser.xp >= currentUser.xpNeeded) {
+                currentUser.xp -= currentUser.xpNeeded;
+                currentUser.level++;
+                currentUser.xpNeeded = Math.floor(currentUser.xpNeeded * 1.5);
+                showToast(`Level Up! Kamu sekarang Level ${currentUser.level}! 🎉`);
+            }
+            
+            await updateUserData();
+        }
+
+        async function addCoins(amount) {
+            currentUser.balance += amount;
+            await updateUserData();
+            updateProfilePage();
+        }
+
+        function showXPPopup(text) {
+            const popup = document.getElementById('xp-popup');
+            popup.textContent = text;
+            popup.classList.add('show');
+            setTimeout(() => popup.classList.remove('show'), 2000);
+        }
+
+        async function addToWatchHistory(animeId, episodeNum) {
+            const animeData = await readFromFirebase('anime') || {};
+            const anime = Object.values(animeData).find(a => a.id == animeId);
+            
+            if (!currentUser.watchHistory) currentUser.watchHistory = {};
+            
+            const historyId = Date.now().toString();
+            currentUser.watchHistory[historyId] = {
+                animeId,
+                episode: episodeNum,
+                title: anime.title,
+                poster: anime.poster,
+                watchedAt: new Date().toISOString()
+            };
+            
+            // Keep only last 20
+            const historyArray = Object.entries(currentUser.watchHistory);
+            if (historyArray.length > 20) {
+                const sorted = historyArray.sort((a, b) => new Date(b[1].watchedAt) - new Date(a[1].watchedAt));
+                currentUser.watchHistory = Object.fromEntries(sorted.slice(0, 20));
+            }
+            
+            await updateUserData();
+        }
+
+        // Comments
+        function renderComments(comments) {
+            const container = document.getElementById('comments-list');
+            
+            if (!comments || comments.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: var(--ios-gray); padding: 20px;">Belum ada komentar. Jadi yang pertama!</div>';
+                return;
+            }
+            
+            // Sort by time
+            const sortedComments = comments.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+            
+            container.innerHTML = sortedComments.map(comment => {
+                const badge = getUserBadge(comment.userId);
+                const badgeClass = getBadgeClass(comment.userId);
+                
+                return `
+                    <div class="comment-item">
+                        <img src="${comment.avatar}" class="comment-avatar ${badgeClass}">
+                        <div class="comment-content">
+                            <div class="comment-header">
+                                <span class="comment-author">${comment.username}</span>
+                                ${badge ? `<span class="badge-icon">${badge}</span>` : ''}
+                                <span class="comment-time">${formatTime(comment.createdAt)}</span>
+                            </div>
+                            ${comment.text ? `<div class="comment-text">${comment.text}</div>` : ''}
+                            ${comment.image ? `<img src="${comment.image}" class="comment-image">` : ''}
+                            ${comment.sticker ? `<div style="font-size: 60px;">${comment.sticker}</div>` : ''}
+                            <div class="comment-footer">
+                                <span class="comment-action ${comment.likes && comment.likes.includes(currentUser.id) ? 'liked' : ''}" onclick="likeComment('${comment.id}')">
+                                    <i class="fas fa-heart"></i> ${comment.likes ? comment.likes.length : 0}
+                                </span>
+                                <span class="comment-action" onclick="replyComment('${comment.id}')">
+                                    <i class="fas fa-reply"></i> Balas
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function postComment() {
+            const text = document.getElementById('comment-input').value;
+            const image = commentImageAttachment;
+            
+            if (!text && !image && !window.selectedSticker) {
+                showToast('Tulis komentar atau pilih sticker!');
+                return;
+            }
+            
+            const commentId = Date.now().toString();
+            const newComment = {
+                id: commentId,
+                animeId: currentEpisode.animeId,
+                episode: currentEpisode.episodeNum,
+                userId: currentUser.id,
+                username: currentUser.username,
+                avatar: currentUser.avatar,
+                text: text,
+                image: image,
+                sticker: window.selectedSticker || null,
+                likes: [],
+                createdAt: new Date().toISOString()
+            };
+            
+            // Save to Firebase
+            if (firebaseInitialized) {
+                await saveToFirebase(`comments/${currentEpisode.animeId}/${currentEpisode.episodeNum}/${commentId}`, newComment);
+            } else {
+                // Fallback to localStorage
+                const key = `comments_${currentEpisode.animeId}_${currentEpisode.episodeNum}`;
+                const existing = JSON.parse(localStorage.getItem(key) || '[]');
+                existing.push(newComment);
+                localStorage.setItem(key, JSON.stringify(existing));
+                renderComments(existing);
+            }
+            
+            // Clear inputs
+            document.getElementById('comment-input').value = '';
+            commentImageAttachment = null;
+            window.selectedSticker = null;
+            
+            showToast('Komentar terkirim!');
+        }
+
+        async function likeComment(commentId) {
+            if (!firebaseInitialized) return;
+            
+            const commentRef = database.ref(`comments/${currentEpisode.animeId}/${currentEpisode.episodeNum}/${commentId}`);
+            const snapshot = await commentRef.once('value');
+            const comment = snapshot.val();
+            
+            if (!comment.likes) comment.likes = [];
+            
+            if (comment.likes.includes(currentUser.id)) {
+                comment.likes = comment.likes.filter(id => id !== currentUser.id);
+            } else {
+                comment.likes.push(currentUser.id);
+            }
+            
+            await commentRef.update({ likes: comment.likes });
+        }
+
+        async function replyComment(commentId) {
+            const reply = prompt('Tulis balasan:');
+            if (!reply) return;
+            
+            // For simplicity, replies are stored as new comments with reference
+            const replyId = Date.now().toString();
+            const newReply = {
+                id: replyId,
+                animeId: currentEpisode.animeId,
+                episode: currentEpisode.episodeNum,
+                userId: currentUser.id,
+                username: currentUser.username,
+                avatar: currentUser.avatar,
+                text: reply,
+                replyTo: commentId,
+                likes: [],
+                createdAt: new Date().toISOString()
+            };
+            
+            if (firebaseInitialized) {
+                await saveToFirebase(`comments/${currentEpisode.animeId}/${currentEpisode.episodeNum}/${replyId}`, newReply);
+            }
+        }
+
+        // Sticker Picker
+        function openStickerPicker(target) {
+            stickerTarget = target;
+            const stickers = ['😀', '😂', '🥰', '😎', '🤔', '👍', '❤️', '🔥', '🎉', '😭', '😡', '🥺', '✨', '🌟', '💯', '🙏'];
+            
+            document.getElementById('sticker-grid').innerHTML = stickers.map(s => `
+                <div class="sticker-item" onclick="selectSticker('${s}')">${s}</div>
+            `).join('');
+            
+            document.getElementById('sticker-modal').classList.add('active');
+        }
+
+        function selectSticker(sticker) {
+            window.selectedSticker = sticker;
+            closeModal('sticker-modal');
+            
+            if (stickerTarget === 'comment') {
+                postComment();
+            }
+        }
+
+        // Feed Functions
+        function loadFeedFromData(feedData) {
+            const feeds = feedData ? Object.values(feedData) : [];
+            const container = document.getElementById('feed-list');
+            
+            if (feeds.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: var(--ios-gray); padding: 40px;">Belum ada postingan. Jadi yang pertama!</div>';
+                return;
+            }
+            
+            container.innerHTML = feeds.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map(feed => {
+                const badge = getUserBadge(feed.userId);
+                
+                return `
+                    <div class="feed-item">
+                        <div class="feed-header">
+                            <img src="${feed.avatar}" class="feed-avatar">
+                            <div class="feed-user-info">
+                                <div class="feed-username">
+                                    ${feed.username}
+                                    ${badge ? `<span>${badge}</span>` : ''}
+                                </div>
+                                <div class="feed-time">${formatTime(feed.createdAt)}</div>
+                            </div>
+                        </div>
+                        ${feed.text ? `<div class="feed-content">${feed.text}</div>` : ''}
+                        ${feed.image ? `<img src="${feed.image}" class="feed-image">` : ''}
+                        ${feed.sticker ? `<div style="font-size: 60px; text-align: center; padding: 20px;">${feed.sticker}</div>` : ''}
+                        <div class="feed-footer">
+                            <div class="feed-action ${feed.likes && feed.likes.includes(currentUser.id) ? 'active' : ''}" onclick="likeFeed('${feed.id}')">
+                                <i class="fas fa-heart"></i> ${feed.likes ? feed.likes.length : 0}
+                            </div>
+                            <div class="feed-action" onclick="commentFeed('${feed.id}')">
+                                <i class="fas fa-comment"></i> ${feed.comments ? Object.keys(feed.comments).length : 0}
+                            </div>
+                            <div class="feed-action">
+                                <i class="fas fa-share"></i> Share
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function postFeed() {
+            const text = document.getElementById('feed-input').value;
+            const image = feedImageAttachment;
+            
+            if (!text && !image && !window.selectedSticker) {
+                showToast('Tulis sesuatu untuk diposting!');
+                return;
+            }
+            
+            const feedId = Date.now().toString();
+            const newFeed = {
+                id: feedId,
+                userId: currentUser.id,
+                username: currentUser.username,
+                avatar: currentUser.avatar,
+                text: text,
+                image: image,
+                sticker: window.selectedSticker || null,
+                likes: [],
+                comments: {},
+                createdAt: new Date().toISOString()
+            };
+            
+            await saveToFirebase(`feed/${feedId}`, newFeed);
+            
+            // Clear
+            document.getElementById('feed-input').value = '';
+            feedImageAttachment = null;
+            window.selectedSticker = null;
+            
+            showToast('Postingan berhasil dibuat!');
+        }
+
+        async function likeFeed(feedId) {
+            if (!firebaseInitialized) return;
+            
+            const feedRef = database.ref(`feed/${feedId}`);
+            const snapshot = await feedRef.once('value');
+            const feed = snapshot.val();
+            
+            if (!feed.likes) feed.likes = [];
+            
+            if (feed.likes.includes(currentUser.id)) {
+                feed.likes = feed.likes.filter(id => id !== currentUser.id);
+            } else {
+                feed.likes.push(currentUser.id);
+            }
+            
+            await feedRef.update({ likes: feed.likes });
+        }
+
+        async function commentFeed(feedId) {
+            const comment = prompt('Tulis komentar:');
+            if (!comment) return;
+            
+            const commentId = Date.now().toString();
+            const newComment = {
+                id: commentId,
+                userId: currentUser.id,
+                username: currentUser.username,
+                avatar: currentUser.avatar,
+                text: comment,
+                createdAt: new Date().toISOString()
+            };
+            
+            await saveToFirebase(`feed/${feedId}/comments/${commentId}`, newComment);
+        }
+
+        // Profile Page
+        function updateProfilePage() {
+            document.getElementById('profile-avatar').src = currentUser.avatar;
+            document.getElementById('profile-name-text').textContent = currentUser.username;
+            document.getElementById('profile-level').textContent = currentUser.level;
+            document.getElementById('level-current').textContent = currentUser.level;
+            document.getElementById('xp-current').textContent = currentUser.xp;
+            document.getElementById('xp-needed').textContent = currentUser.xpNeeded;
+            document.getElementById('balance-amount').textContent = currentUser.balance.toLocaleString();
+            document.getElementById('shop-balance').textContent = currentUser.balance.toLocaleString();
+            
+            // Update progress bar
+            const progress = (currentUser.xp / currentUser.xpNeeded) * 100;
+            document.getElementById('level-progress').style.width = progress + '%';
+            
+            // Badge display
+            const badge = getUserBadge(currentUser.id);
+            document.getElementById('profile-badge-display').innerHTML = badge;
+            
+            // Rank
+            const ranks = ['Novice', 'Apprentice', 'Warrior', 'Knight', 'Elite', 'Master', 'Grandmaster', 'Legend', 'Mythic', 'Immortal'];
+            const rankIndex = Math.min(Math.floor(currentUser.level / 10), ranks.length - 1);
+            document.getElementById('profile-rank').textContent = ranks[rankIndex];
+            
+            // Stats
+            const watchHistory = currentUser.watchHistory ? Object.values(currentUser.watchHistory) : [];
+            document.getElementById('stat-anime').textContent = new Set(watchHistory.map(h => h.animeId)).size;
+            document.getElementById('stat-episodes').textContent = watchHistory.length;
+            document.getElementById('stat-hours').textContent = Math.floor(watchHistory.length * 24 / 60);
+            
+            // History
+            const historyContainer = document.getElementById('watch-history');
+            if (watchHistory.length === 0) {
+                historyContainer.innerHTML = '<div style="color: var(--ios-gray); font-size: 14px; grid-column: 1/-1; text-align: center; padding: 20px;">Belum ada riwayat menonton</div>';
+            } else {
+                historyContainer.innerHTML = watchHistory.slice(0, 6).map(h => `
+                    <div class="history-item" onclick="openAnimeDetail(${h.animeId})">
+                        <img src="${h.poster}" onerror="this.src='https://via.placeholder.com/150x200?text=No+Image'">
+                        <div class="history-overlay">EP ${h.episode}</div>
+                    </div>
+                `).join('');
+            }
+            
+            // Settings info
+            document.getElementById('join-date').textContent = new Date(currentUser.joinDate).toLocaleDateString('id-ID');
+            document.getElementById('device-info').textContent = currentUser.device;
+        }
+
+        // Search
+        async function performSearch(query) {
+            if (!query.trim()) {
+                document.getElementById('search-results').innerHTML = `
+                    <div style="text-align: center; color: var(--ios-gray); padding: 40px;">
+                        <i class="fas fa-search" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+                        <p>Ketik untuk mencari anime atau user</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const animeData = await readFromFirebase('anime') || {};
+            const usersData = await readFromFirebase('users') || {};
+            
+            const anime = Object.values(animeData);
+            const users = Object.values(usersData);
+            
+            const matchedAnime = anime.filter(a => a.title.toLowerCase().includes(query.toLowerCase()));
+            const matchedUsers = users.filter(u => u.username.toLowerCase().includes(query.toLowerCase()) && u.id !== currentUser.id);
+            
+            let html = '';
+            
+            if (matchedAnime.length > 0) {
+                html += '<div style="margin-bottom: 16px; font-weight: 600; color: var(--ios-text-secondary);">📺 Anime</div>';
+                html += matchedAnime.map(a => {
+                    const episodeCount = a.episodes ? Object.keys(a.episodes).length : 0;
+                    return `
+                        <div class="search-item" onclick="openAnimeDetail(${a.id}); closeSearch();">
+                            <img src="${a.poster}" onerror="this.src='https://via.placeholder.com/60x80?text=No+Image'">
+                            <div class="search-item-info">
+                                <div class="search-item-title">${a.title}</div>
+                                <div class="search-item-meta">${a.genre} • ${episodeCount} Episode</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            
+            if (matchedUsers.length > 0) {
+                html += '<div style="margin: 24px 0 16px; font-weight: 600; color: var(--ios-text-secondary);">👥 User</div>';
+                html += matchedUsers.map(u => `
+                    <div class="user-search-item" onclick="viewUserProfile('${u.id}')">
+                        <img src="${u.avatar}" onerror="this.src='https://via.placeholder.com/50?text=?'">
+                        <div class="search-item-info">
+                            <div class="search-item-title">${u.username} ${getUserBadge(u.id)}</div>
+                            <div class="search-item-meta">Level ${u.level} • ${u.device}</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            if (matchedAnime.length === 0 && matchedUsers.length === 0) {
+                html = '<div style="text-align: center; color: var(--ios-gray); padding: 40px;">Tidak ada hasil ditemukan</div>';
+            }
+            
+            document.getElementById('search-results').innerHTML = html;
+        }
+
+        async function viewUserProfile(userId) {
+            const users = await readFromFirebase('users') || {};
+            const user = users[userId];
+            if (!user) return;
+            
+            document.getElementById('user-view-avatar').src = user.avatar;
+            document.getElementById('user-view-name').textContent = user.username;
+            document.getElementById('user-view-level').textContent = user.level;
+            
+            const watchHistory = user.watchHistory ? Object.values(user.watchHistory) : [];
+            document.getElementById('user-view-anime').textContent = new Set(watchHistory.map(h => h.animeId)).size;
+            document.getElementById('user-view-joined').textContent = new Date(user.joinDate).toLocaleDateString('id-ID');
+            
+            const badge = getUserBadge(user.id);
+            document.getElementById('user-view-badge').innerHTML = badge;
+            
+            // Set banner color based on VIP
+            const colors = {
+                'bronze': '#cd7f32',
+                'silver': '#c0c0c0',
+                'gold': '#ffd700',
+                'diamond': '#b9f2ff',
+                'master': 'linear-gradient(135deg, #ff0000, #ffff00)'
+            };
+            
+            const banner = document.getElementById('user-banner');
+            if (user.inventory?.vip && colors[user.inventory.vip]) {
+                banner.style.background = colors[user.inventory.vip];
+            } else {
+                banner.style.background = 'linear-gradient(135deg, var(--ios-blue), var(--ios-purple))';
+            }
+            
+            document.getElementById('user-profile-view').style.display = 'block';
+        }
+
+        function closeUserProfile() {
+            document.getElementById('user-profile-view').style.display = 'none';
+        }
+
+        // Owner Functions
+        function openUploadModal() {
+            if (!currentUser.isOwner) {
+                showToast('Hanya owner yang bisa upload anime!');
+                return;
+            }
+            tempEpisodes = [];
+            updateEpisodeList();
+            document.getElementById('upload-modal').classList.add('active');
+        }
+
+        function addEpisode() {
+            const num = document.getElementById('episode-num').value;
+            const link = document.getElementById('episode-link').value;
+            
+            if (!num || !link) {
+                showToast('Isi nomor episode dan link!');
+                return;
+            }
+            
+            tempEpisodes.push({ num: parseInt(num), link });
+            tempEpisodes.sort((a, b) => a.num - b.num);
+            
+            document.getElementById('episode-num').value = '';
+            document.getElementById('episode-link').value = '';
+            
+            updateEpisodeList();
+        }
+
+        function updateEpisodeList() {
+            const container = document.getElementById('episode-list');
+            if (tempEpisodes.length === 0) {
+                container.innerHTML = '<div style="color: var(--ios-gray); text-align: center; padding: 20px; font-size: 13px;">Belum ada episode. Tambahkan di bawah.</div>';
+                return;
+            }
+            
+            container.innerHTML = tempEpisodes.map((ep, idx) => `
+                <div class="episode-list-item">
+                    <span>Episode ${ep.num}</span>
+                    <span class="remove-episode" onclick="removeEpisode(${idx})">Hapus</span>
+                </div>
+            `).join('');
+        }
+
+        function removeEpisode(index) {
+            tempEpisodes.splice(index, 1);
+            updateEpisodeList();
+        }
+
+        async function handleUpload(e) {
+            e.preventDefault();
+            
+            const animeId = Date.now().toString();
+            const episodesObj = {};
+            tempEpisodes.forEach(ep => {
+                episodesObj[ep.num] = ep;
+            });
+            
+            const newAnime = {
+                id: animeId,
+                title: document.getElementById('upload-title').value,
+                poster: document.getElementById('upload-poster').value,
+                genre: document.getElementById('upload-genre').value,
+                studio: document.getElementById('upload-studio').value,
+                synopsis: document.getElementById('upload-synopsis').value,
+                episodes: episodesObj,
+                views: 0,
+                uploadDate: new Date().toISOString(),
+                ownerId: currentUser.id
+            };
+            
+            // Save to Firebase
+            await saveToFirebase(`anime/${animeId}`, newAnime);
+            
+            closeModal('upload-modal');
+            showToast('Anime berhasil diupload! Semua user bisa melihatnya sekarang.');
+            
+            // Reset form
+            e.target.reset();
+            tempEpisodes = [];
+            updateEpisodeList();
+        }
+
+        function openEventModal() {
+            document.getElementById('event-modal').classList.add('active');
+        }
+
+        async function handleCreateEvent(e) {
+            e.preventDefault();
+            
+            const event = {
+                title: document.getElementById('event-title-input').value,
+                description: document.getElementById('event-desc-input').value,
+                image: document.getElementById('event-image-input').value,
+                createdAt: new Date().toISOString(),
+                createdBy: currentUser.id
+            };
+            
+            await saveToFirebase('event', event);
+            closeModal('event-modal');
+            showToast('Event berhasil dibuat! Semua user bisa melihatnya.');
+        }
+
+        function loadEventFromData(event) {
+            const banner = document.getElementById('event-banner');
+            
+            if (event) {
+                document.getElementById('event-title').textContent = event.title;
+                document.getElementById('event-desc').textContent = event.description;
+                if (event.image) {
+                    banner.style.background = `url(${event.image}) center/cover`;
+                } else {
+                    banner.style.background = 'linear-gradient(135deg, var(--ios-purple), var(--ios-pink))';
+                }
+                banner.style.display = 'flex';
+            } else {
+                banner.style.display = 'none';
+            }
+        }
+
+        function openLevelEditModal() {
+            document.getElementById('level-modal').classList.add('active');
+        }
+
+        async function handleEditLevel(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('level-target-user').value;
+            const users = await readFromFirebase('users') || {};
+            const userEntry = Object.entries(users).find(([id, u]) => u.username === username);
+            
+            if (!userEntry) {
+                showToast('User tidak ditemukan!');
+                return;
+            }
+            
+            const [userId, user] = userEntry;
+            
+            user.level = parseInt(document.getElementById('new-level').value);
+            user.xpNeeded = parseInt(document.getElementById('new-xp-needed').value);
+            const reward = parseInt(document.getElementById('level-reward').value);
+            
+            if (reward > 0) {
+                user.balance += reward;
+            }
+            
+            await saveToFirebase(`users/${userId}`, user);
+            
+            // Update current user if editing self
+            if (currentUser.id === userId) {
+                currentUser = user;
+                localStorage.setItem('animeStreamSession', JSON.stringify(currentUser));
+                updateProfilePage();
+            }
+            
+            closeModal('level-modal');
+            showToast(`Level ${username} diupdate ke Level ${user.level}!`);
+        }
+
+        // Shop Functions
+        function openShop() {
+            document.getElementById('shop-modal').classList.add('active');
+            document.getElementById('shop-balance').textContent = currentUser.balance.toLocaleString();
+        }
+
+        async function buyItem(type, item, price) {
+            if (currentUser.balance < price) {
+                showToast('Saldo tidak cukup!');
+                return;
+            }
+            
+            // Check exclusive badges
+            if (type === 'badge' && ['prince', 'pejabat', 'raja', 'sepuh'].includes(item)) {
+                const userId = parseInt(currentUser.id);
+                if (item === 'prince' && userId !== 1) {
+                    showToast('Badge Prince hanya untuk User ID 1!');
+                    return;
+                }
+                if (item === 'pejabat' && (userId < 4 || userId > 10)) {
+                    showToast('Badge Pejabat hanya untuk User ID 4-10!');
+                    return;
+                }
+                if (item === 'raja' && (userId < 10 || userId > 15)) {
+                    showToast('Badge Aku Raja hanya untuk User ID 10-15!');
+                    return;
+                }
+                if (item === 'sepuh' && (userId < 15 || userId > 20)) {
+                    showToast('Badge Sepuh hanya untuk User ID 15-20!');
+                    return;
+                }
+            }
+            
+            currentUser.balance -= price;
+            
+            if (!currentUser.inventory) currentUser.inventory = { borders: [], badges: [], vip: null };
+            
+            if (type === 'border') {
+                if (!currentUser.inventory.borders.includes(item)) {
+                    currentUser.inventory.borders.push(item);
+                }
+            } else if (type === 'badge') {
+                if (!currentUser.inventory.badges.includes(item)) {
+                    currentUser.inventory.badges.push(item);
+                }
+            } else if (type === 'vip') {
+                currentUser.inventory.vip = item;
+            }
+            
+            await updateUserData();
+            updateProfilePage();
+            document.getElementById('shop-balance').textContent = currentUser.balance.toLocaleString();
+            showToast(`Berhasil membeli ${item}!`);
+        }
+
+        // Settings Functions
+        function openEditProfileModal() {
+            document.getElementById('edit-avatar').value = currentUser.avatar;
+            document.getElementById('edit-profile-modal').classList.add('active');
+        }
+
+        async function handleEditProfile(e) {
+            e.preventDefault();
+            
+            const newAvatar = document.getElementById('edit-avatar').value;
+            const newUsername = document.getElementById('edit-username').value;
+            
+            if (newAvatar) {
+                currentUser.avatar = newAvatar;
+            }
+            
+            if (newUsername) {
+                // Check if can change username (once per 7 days)
+                if (currentUser.lastUsernameChange) {
+                    const lastChange = new Date(currentUser.lastUsernameChange);
+                    const now = new Date();
+                    const diffDays = (now - lastChange) / (1000 * 60 * 60 * 24);
+                    
+                    if (diffDays < 7) {
+                        showToast(`Username hanya bisa diganti 1x dalam 7 hari. Tunggu ${Math.ceil(7 - diffDays)} hari lagi.`);
+                        return;
+                    }
+                }
+                
+                // Check if username exists
+                const users = await readFromFirebase('users') || {};
+                if (Object.values(users).find(u => u.username === newUsername && u.id !== currentUser.id)) {
+                    showToast('Username sudah digunakan!');
+                    return;
+                }
+                
+                currentUser.username = newUsername;
+                currentUser.lastUsernameChange = new Date().toISOString();
+            }
+            
+            await updateUserData();
+            updateUserUI();
+            updateProfilePage();
+            closeModal('edit-profile-modal');
+            showToast('Profil berhasil diupdate!');
+        }
+
+        function openChangePasswordModal() {
+            document.getElementById('change-password-modal').classList.add('active');
+        }
+
+        async function handleChangePassword(e) {
+            e.preventDefault();
+            
+            const oldPass = document.getElementById('old-password').value;
+            const newPass = document.getElementById('new-password').value;
+            const confirmPass = document.getElementById('confirm-password').value;
+            
+            if (oldPass !== currentUser.password) {
+                showToast('Kata sandi lama salah!');
+                return;
+            }
+            
+            if (newPass !== confirmPass) {
+                showToast('Konfirmasi kata sandi tidak cocok!');
+                return;
+            }
+            
+            currentUser.password = newPass;
+            await updateUserData();
+            closeModal('change-password-modal');
+            showToast('Kata sandi berhasil diganti!');
+        }
+
+        function switchAccount() {
+            localStorage.removeItem('animeStreamSession');
+            location.reload();
+        }
+
+        async function deleteAccount() {
+            if (!confirm('Yakin ingin menghapus akun? Semua data akan hilang!')) return;
+            
+            // Delete from Firebase
+            if (firebaseInitialized) {
+                await database.ref(`users/${currentUser.id}`).remove();
+            }
+            
+            localStorage.removeItem('animeStreamSession');
+            
+            showToast('Akun berhasil dihapus!');
+            setTimeout(() => location.reload(), 1500);
+        }
+
+        // Helper Functions
+        async function updateUserData() {
+            localStorage.setItem('animeStreamSession', JSON.stringify(currentUser));
+            await saveToFirebase(`users/${currentUser.id}`, currentUser);
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function formatTime(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diff = (now - date) / 1000;
+            
+            if (diff < 60) return 'Baru saja';
+            if (diff < 3600) return `${Math.floor(diff / 60)} menit yang lalu`;
+            if (diff < 86400) return `${Math.floor(diff / 3600)} jam yang lalu`;
+            if (diff < 604800) return `${Math.floor(diff / 86400)} hari yang lalu`;
+            return date.toLocaleDateString('id-ID');
+        }
+
+        function handleFeedImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    feedImageAttachment = e.target.result;
+                    showToast('Gambar dipilih!');
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function handleCommentImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    commentImageAttachment = e.target.result;
+                    showToast('Gambar dipilih!');
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // Mini Player
+        function closeMiniPlayer() {
+            document.getElementById('mini-player').classList.remove('active');
+            currentEpisode = null;
+        }
+
+        // Close modals on outside click
+        window.onclick = function(event) {
+            if (event.target.classList.contains('ios-modal')) {
+                event.target.classList.remove('active');
+            }
+        }
+    </script>
+</body>
+</html>
